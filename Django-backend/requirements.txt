@@ -1,0 +1,26 @@
+# Django
+django>=4.2
+
+# Django REST Framework
+djangorestframework>=3.14
+django-filter>=23.0
+
+# Authentication
+djangorestframework-simplejwt>=5.3
+
+# CORS
+django-cors-headers>=4.0
+
+# Environment
+python-decouple>=3.8
+
+# Database
+psycopg2-binary>=2.9
+dj-database-url>=2.1.0
+
+# Static & media
+Pillow>=10.0
+whitenoise>=6.5
+
+# Production server
+gunicorn>=21.0

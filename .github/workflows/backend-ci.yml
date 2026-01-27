@@ -1,0 +1,75 @@
+name: Backend CI (Django)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Django-backend/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'Django-backend/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: test_edustream
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: Django-backend
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: Django-backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Lint (flake8)
+        run: flake8 .
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_edustream
+          SECRET_KEY: test-secret
+          DEBUG: 'True'
+        run: python manage.py migrate
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_edustream
+          SECRET_KEY: test-secret
+          DEBUG: 'True'
+        run: python manage.py test
+
+      - name: Check missing migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_edustream
+        run: python manage.py makemigrations --check --dry-run

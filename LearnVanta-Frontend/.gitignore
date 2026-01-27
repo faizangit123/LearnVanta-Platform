@@ -1,0 +1,32 @@
+# Logs (never commit logs)
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies (NEVER commit)
+node_modules
+
+# Build outputs (generated)
+dist
+dist-ssr
+
+# Local environment files
+*.local
+
+# Editor / OS files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Bun
+bun.lockb
