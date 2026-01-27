@@ -32,4 +32,4 @@ RUN python manage.py collectstatic --noinput --clear || true
 EXPOSE 8000
 
 # Start server
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "edustream_backend.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "edustream_backend.wsgi:application"]

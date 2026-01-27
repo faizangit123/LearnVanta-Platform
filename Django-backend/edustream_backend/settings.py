@@ -8,6 +8,8 @@ import os
 from decouple import config
 import dj_database_url
 
+print("DJANGO ALLOWED_HOSTS =", config("ALLOWED_HOSTS", default="NOT SET"))
+
 # --------------------------------------------------
 # Base directory
 # --------------------------------------------------
@@ -158,13 +160,22 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 # CORS
 # --------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
-    FRONTEND_URL,
+    FRONTEND_URL,  # https://learn-vanta-platform.vercel.app
     "http://localhost:5173",
     "http://localhost:3000",
     "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://learnvanta-platform.onrender.com",
+    "https://learn-vanta-platform.vercel.app",
+]
+
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --------------------------------------------------
 # Internationalization
