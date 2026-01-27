@@ -150,6 +150,11 @@ REST_FRAMEWORK = {
 }
 
 # --------------------------------------------------
+# Frontend URL
+# --------------------------------------------------
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+
+# --------------------------------------------------
 # CORS
 # --------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
@@ -196,11 +201,6 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-
-# --------------------------------------------------
-# Frontend URL
-# --------------------------------------------------
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 
 # --------------------------------------------------
 # Local overrides (optional)
