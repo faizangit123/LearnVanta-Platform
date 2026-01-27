@@ -1,6 +1,6 @@
-# EduStream Django Backend
+# Edustream Django Backend
 
-Django REST API backend for the EduStream video learning platform.
+Django REST API backend for the LearnVanta video learning platform.
 
 ## Features
 
@@ -213,6 +213,3 @@ pip install -r requirements.txt
 
 MIT License
 
-## Support
-
-For issues and questions, please refer to `BACKEND_README.md` for detailed documentation.

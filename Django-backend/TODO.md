@@ -1,6 +1,6 @@
 # EduStream Backend - Implementation Checklist
 
-## ✅ Completed Tasks
+## Completed Tasks
 
 ### Project Setup
 
