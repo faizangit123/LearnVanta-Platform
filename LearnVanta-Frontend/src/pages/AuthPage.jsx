@@ -219,7 +219,7 @@ const AuthPage = () => {
               <div className="auth-logo-icon">
                 <GraduationCapIcon />
               </div>
-              <span>LearVanta</span>
+              <span>LearnVanta</span>
             </Link>
             <h1>{isLogin ? "Welcome back" : "Create your account"}</h1>
             <p>
@@ -251,7 +251,7 @@ const AuthPage = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="John Doe"
+                  placeholder="Your Name"
                   className="input"
                   required={!isLogin}
                 />
@@ -266,7 +266,7 @@ const AuthPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="you@example.com"
+                placeholder="Enteryouremail@gmail.com"
                 className="input"
                 required
               />
