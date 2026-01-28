@@ -28,8 +28,8 @@ RUN mkdir -p /app/staticfiles /app/media
 # Collect static (safe for build)
 RUN python manage.py collectstatic --noinput --clear || true
 
-# Expose port
-EXPOSE 8000
+# # Expose port
+# EXPOSE 8000
 
 # Start server
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "edustream_backend.wsgi:application"]
+CMD sh -c "python manage.py migrate && gunicorn edustream_backend.wsgi:application --bind 0.0.0.0:$PORT"
