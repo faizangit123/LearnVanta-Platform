@@ -33,6 +33,12 @@ ALLOWED_HOSTS = [
     ).split(",")
 ]
 
+# Allow Render internal routing
+ALLOWED_HOSTS += [
+    "0.0.0.0",
+    "localhost",
+]
+
 # --------------------------------------------------
 # Applications
 # --------------------------------------------------
@@ -173,8 +179,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://learn-vanta-platform.vercel.app",
 ]
 
-
-USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --------------------------------------------------
