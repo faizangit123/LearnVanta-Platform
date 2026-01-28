@@ -1,7 +1,10 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth import get_user_model
-from accounts.models import UserRole
 import os
+
+from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+
+from accounts.models import UserRole
+
 
 User = get_user_model()
 
@@ -16,11 +19,15 @@ class Command(BaseCommand):
         password = os.getenv("ADMIN_PASSWORD")
 
         if not email or not password:
-            self.stdout.write(self.style.WARNING("Admin credentials not set"))
+            self.stdout.write(
+                self.style.WARNING("Admin credentials not set")
+            )
             return
 
         if User.objects.filter(email=email).exists():
-            self.stdout.write(self.style.WARNING("Admin user already exists"))
+            self.stdout.write(
+                self.style.WARNING("Admin user already exists")
+            )
             return
 
         user = User.objects.create_superuser(
@@ -28,12 +35,14 @@ class Command(BaseCommand):
             username=username,
             password=password,
             first_name="Admin",
-            email_verified=True
+            email_verified=True,
         )
 
         UserRole.objects.create(
             user=user,
-            role=UserRole.RoleChoices.ADMIN
+            role=UserRole.RoleChoices.ADMIN,
         )
 
-        self.stdout.write(self.style.SUCCESS("Admin superuser created successfully"))
+        self.stdout.write(
+            self.style.SUCCESS("Admin superuser created successfully")
+        )
