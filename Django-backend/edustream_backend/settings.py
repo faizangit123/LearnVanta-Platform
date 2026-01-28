@@ -8,7 +8,6 @@ import os
 from decouple import config
 import dj_database_url
 
-print("DJANGO ALLOWED_HOSTS =", config("ALLOWED_HOSTS", default="NOT SET"))
 
 # --------------------------------------------------
 # Base directory
@@ -25,19 +24,26 @@ SECRET_KEY = config(
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
+# ALLOWED_HOSTS = [
+#     host.strip()
+#     for host in config(
+#         "ALLOWED_HOSTS",
+#         default="localhost,127.0.0.1"
+#     ).split(",")
+# ]
+
+# # Allow Render internal routing
+# ALLOWED_HOSTS += [
+#     "0.0.0.0",
+#     "localhost",
+# ]
+
 ALLOWED_HOSTS = [
-    host.strip()
-    for host in config(
-        "ALLOWED_HOSTS",
-        default="localhost,127.0.0.1"
-    ).split(",")
+    "learnvanta-platform.onrender.com",
+    "localhost",
+    "127.0.0.1",
 ]
 
-# Allow Render internal routing
-ALLOWED_HOSTS += [
-    "0.0.0.0",
-    "localhost",
-]
 
 # --------------------------------------------------
 # Applications
