@@ -7,10 +7,6 @@ from datetime import timedelta
 import os
 import dj_database_url
 
-
-print("DJANGO ALLOWED_HOSTS =", ALLOWED_HOSTS)
-
-
 # --------------------------------------------------
 # Base directory
 # --------------------------------------------------
@@ -31,9 +27,6 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 # Safety fallback (optional but recommended)
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == [""]:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-
-print("DJANGO ALLOWED_HOSTS =", ALLOWED_HOSTS)
-
 
 # --------------------------------------------------
 # Applications
