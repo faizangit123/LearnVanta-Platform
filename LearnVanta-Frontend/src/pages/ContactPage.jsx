@@ -134,7 +134,7 @@ const ContactPage = () => {
                           name="name"
                           value={formData.name}
                           onChange={handleChange}
-                          placeholder="John Doe"
+                          placeholder="Your Name"
                           className="input"
                           required
                         />
@@ -147,7 +147,7 @@ const ContactPage = () => {
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          placeholder="john@example.com"
+                          placeholder="youremail@example.com"
                           className="input"
                           required
                         />

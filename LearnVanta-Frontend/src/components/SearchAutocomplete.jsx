@@ -120,7 +120,6 @@ const SearchAutocomplete = ({
     setQuery("");
     onClose?.();
   };
-
   const handleKeyDown = useCallback((e) => {
     if (!isOpen || !hasResults) return;
 
