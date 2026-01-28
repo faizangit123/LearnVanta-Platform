@@ -8,7 +8,7 @@ The platform is built with a **React + Vite frontend** and a **Django REST backe
 ---
 
 ## 🔗 Live Demo
-- **Frontend:** https://your-project.vercel.app  
+- **Frontend:** https://learn-vanta-platform.vercel.app/  
 - **Backend API:** https://your-backend.onrender.com  
 - **Health Check:** `/api/health/`
 
