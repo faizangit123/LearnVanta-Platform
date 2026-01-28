@@ -9,7 +9,6 @@ from accounts.models import UserRole
 User = get_user_model()
 
 
-
 class Command(BaseCommand):
     help = "Create admin user if it does not exist"
 
