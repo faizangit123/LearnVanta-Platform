@@ -5,8 +5,10 @@ Django settings for edustream backend
 from pathlib import Path
 from datetime import timedelta
 import os
-from decouple import config
 import dj_database_url
+
+
+print("DJANGO ALLOWED_HOSTS =", ALLOWED_HOSTS)
 
 
 # --------------------------------------------------
@@ -17,32 +19,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------------------------------
 # Security
 # --------------------------------------------------
-SECRET_KEY = config(
-    'SECRET_KEY',
-    default='django-insecure-change-this-in-production'
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-change-this-in-production"
 )
 
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-# ALLOWED_HOSTS = [
-#     host.strip()
-#     for host in config(
-#         "ALLOWED_HOSTS",
-#         default="localhost,127.0.0.1"
-#     ).split(",")
-# ]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
 
-# # Allow Render internal routing
-# ALLOWED_HOSTS += [
-#     "0.0.0.0",
-#     "localhost",
-# ]
-
-ALLOWED_HOSTS = [
-    "learnvanta-platform.onrender.com",
-    "localhost",
-    "127.0.0.1",
-]
+print("DJANGO ALLOWED_HOSTS =", ALLOWED_HOSTS)
 
 
 # --------------------------------------------------
@@ -113,7 +99,7 @@ TEMPLATES = [
 # --------------------------------------------------
 # DATABASE CONFIGURATION 
 # --------------------------------------------------
-DATABASE_URL = config('DATABASE_URL', default='')
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if DATABASE_URL:
     # Docker / Production (PostgreSQL)
@@ -166,7 +152,10 @@ REST_FRAMEWORK = {
 # --------------------------------------------------
 # Frontend URL
 # --------------------------------------------------
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+FRONTEND_URL = os.environ.get(
+    "FRONTEND_URL",
+    "http://localhost:5173"
+)
 
 # --------------------------------------------------
 # CORS
@@ -213,15 +202,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # --------------------------------------------------
 # Email
 # --------------------------------------------------
-EMAIL_BACKEND = config(
-    'EMAIL_BACKEND',
-    default='django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend"
 )
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 # --------------------------------------------------
 # Local overrides (optional)
