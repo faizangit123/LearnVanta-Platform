@@ -250,7 +250,7 @@ const ResetPasswordPage = () => {
             <div className="auth-logo-icon">
               <GraduationCapIcon />
             </div>
-            <span>EduStream</span>
+            <span>LearVanta</span>
           </Link>
           <div
             style={{

@@ -1,15 +1,5 @@
-/**
- * Centralized API Configuration
- * 
- * This file contains all API-related configuration and helpers.
- * To connect to Django backend:
- * 1. Set VITE_API_BASE_URL in your .env file (or update baseUrl below)
- * 2. Set VITE_USE_MOCK=false in your .env file
- * 
- * Environment Variables:
- * - VITE_API_BASE_URL: Django backend URL (e.g., http://localhost:8000)
- * - VITE_USE_MOCK: Set to 'false' to use real API (default: true)
- */
+//Centralized API Configuration
+
 
 // ============================================
 // API CONFIGURATION

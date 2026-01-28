@@ -81,7 +81,7 @@ const AboutPage = () => {
               <div className="hero-icon">
                 <GraduationCapIcon />
               </div>
-              <h1>About EduStream</h1>
+              <h1>About LearVanta</h1>
               <p>
                 Empowering students across India with quality education through 
                 engaging video lessons and comprehensive study materials.
@@ -97,7 +97,7 @@ const AboutPage = () => {
               <div className="mission-content">
                 <h2>Our Mission</h2>
                 <p>
-                  At EduStream, we believe that quality education should be accessible to every 
+                  At LearVanta, we believe that quality education should be accessible to every 
                   student, regardless of their location or background. Our mission is to bridge 
                   the gap between students and world-class education through technology.
                 </p>
@@ -159,7 +159,7 @@ const AboutPage = () => {
           <div className="container">
             <div className="cta-content">
               <h2>Ready to Start Learning?</h2>
-              <p>Join thousands of students who are already learning with EduStream</p>
+              <p>Join thousands of students who are already learning with LearVanta</p>
               <div className="cta-buttons">
                 <Link to="/register" className="btn btn-primary btn-lg">
                   Get Started Free

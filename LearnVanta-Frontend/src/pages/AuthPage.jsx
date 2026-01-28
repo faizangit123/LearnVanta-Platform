@@ -139,7 +139,7 @@ const AuthPage = () => {
               <div className="auth-logo-icon">
                 <GraduationCapIcon />
               </div>
-              <span>EduStream</span>
+              <span>LearVanta</span>
             </Link>
           </div>
 
@@ -219,7 +219,7 @@ const AuthPage = () => {
               <div className="auth-logo-icon">
                 <GraduationCapIcon />
               </div>
-              <span>EduStream</span>
+              <span>LearVanta</span>
             </Link>
             <h1>{isLogin ? "Welcome back" : "Create your account"}</h1>
             <p>

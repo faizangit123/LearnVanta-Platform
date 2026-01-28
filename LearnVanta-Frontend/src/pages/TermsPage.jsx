@@ -9,7 +9,7 @@ const TermsPage = () => {
           <div className="container">
             <div className="static-hero-content">
               <h1>Terms of Service</h1>
-              <p>Last updated: January 2024</p>
+              <p>Last updated: January 2026</p>
             </div>
           </div>
         </section>
@@ -144,9 +144,9 @@ const TermsPage = () => {
                   For questions about these Terms of Service, please contact us at:
                 </p>
                 <ul>
-                  <li>Email: legal@edustream.com</li>
-                  <li>Phone: +91 98765 43210</li>
-                  <li>Address: 123 Education Lane, New Delhi, India</li>
+                  <li>Email: faizanrock705@gmail.com</li>
+                  <li>Phone: +91 11223344</li>
+                  <li>Address: New Delhi, India</li>
                 </ul>
               </div>
             </div>

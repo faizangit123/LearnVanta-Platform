@@ -1,6 +1,4 @@
 // Mock Data for EduStream Educational Platform
-// Main Focus: Mathematics for all classes with support for additional subjects
-// Last Updated: Auto-refresh trigger
 
 // Classes Data
 export const classes = [
