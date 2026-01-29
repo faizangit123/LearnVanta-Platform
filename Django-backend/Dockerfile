@@ -47,10 +47,8 @@ RUN python manage.py collectstatic --noinput
 # -----------------------------
 CMD sh -c "\
     python manage.py migrate && \
-    python manage.py create_admin && \
     gunicorn edustream_backend.wsgi:application \
     --bind 0.0.0.0:${PORT:-8000} \
     --workers 2 \
     --timeout 120 \
 "
-
