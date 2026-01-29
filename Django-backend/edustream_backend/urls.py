@@ -19,6 +19,9 @@ urlpatterns = [
 
     # Auth APIs
     path("api/v1/auth/", include("accounts.urls")),
+    
+    # Auth APIs (allauth: email verification + social login)
+    # path("api/v1/auth/", include("allauth.urls")),
 
     # Future APIs (examples)
     # path("api/v1/content/", include("content.urls")),

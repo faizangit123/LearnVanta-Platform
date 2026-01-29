@@ -64,19 +64,19 @@
 
 ### Database
 
-- [ ] Set up PostgreSQL database
-- [ ] Run migrations: `python manage.py migrate`
-- [ ] Create superuser: `python manage.py createsuperuser`
-- [ ] Seed initial data: `python manage.py seed_data`
+- [x] Set up PostgreSQL database
+- [x] Run migrations: `python manage.py migrate`
+- [x] Create superuser: `python manage.py createsuperuser`
+- [x] Seed initial data: `python manage.py seed_data`
 
 ### API Endpoints (To Be Implemented)
 
 #### Content Endpoints
 
-- [ ] content/views.py - CRUD for Classes, Subjects, Chapters, Videos
-- [ ] content/urls.py - Content API routes
-- [ ] Add search and filtering for videos
-- [ ] Add trending and recent video endpoints
+- [x] content/views.py - CRUD for Classes, Subjects, Chapters, Videos
+- [x] content/urls.py - Content API routes
+- [x] Add search and filtering for videos
+- [x] Add trending and recent video endpoints
 
 #### User Data Endpoints
 

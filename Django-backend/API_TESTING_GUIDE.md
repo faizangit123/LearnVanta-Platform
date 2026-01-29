@@ -33,7 +33,7 @@ Authorization: Token <your-token-here>
 ```json
 {
   "email": "user@example.com",
-  "name": "John Doe",
+  "name": "user name",
   "password": "SecurePassword123!"
 }
 ```
@@ -46,7 +46,7 @@ Authorization: Token <your-token-here>
     "id": "uuid-here",
     "email": "user@example.com",
     "username": "user@example.com",
-    "first_name": "John Doe",
+    "first_name": "user name",
     "email_verified": false,
     "role": "user",
     "created_at": "2024-01-15T10:30:00Z"
@@ -103,7 +103,7 @@ Authorization: Token <your-token-here>
     "id": "uuid-here",
     "email": "user@example.com",
     "username": "user@example.com",
-    "first_name": "John Doe",
+    "first_name": "user name",
     "email_verified": true,
     "role": "user",
     "created_at": "2024-01-15T10:30:00Z"
@@ -132,7 +132,7 @@ Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
   "id": "uuid-here",
   "email": "user@example.com",
   "username": "user@example.com",
-  "first_name": "John Doe",
+  "first_name": "user name",
   "email_verified": true,
   "avatar": null,
   "role": "user",
@@ -157,7 +157,7 @@ Content-Type: application/json
 
 ```json
 {
-  "name": "John Updated Doe"
+  "name": "user Updated name"
 }
 ```
 
@@ -168,7 +168,7 @@ Content-Type: application/json
   "id": "uuid-here",
   "email": "user@example.com",
   "username": "user@example.com",
-  "first_name": "John Updated Doe",
+  "first_name": "user Updated name",
   "email_verified": true,
   "avatar": null,
   "role": "user",
@@ -205,7 +205,7 @@ Content-Type: application/json
   "id": "uuid-here",
   "email": "user@example.com",
   "username": "user@example.com",
-  "first_name": "John Doe",
+  "first_name": "user name",
   "email_verified": true,
   "avatar": null,
   "role": "user",

@@ -79,7 +79,7 @@ const Home = () => {
         <div className="hero-content container">
           <div className="hero-grid">
             <div className="hero-text">
-              <div className="hero-badge"><StarIcon filled /> <span>Trusted by 50,000+ Students</span></div>
+              <div className="hero-badge"><StarIcon filled /> <span>Learning platforms</span></div>
               <h1 className="hero-title">Learn Smarter, <span className="gradient-text">Score Higher</span></h1>
               <p className="hero-description">Quality education for Class 8-12 and College students. Expert video lessons, comprehensive notes, and exam-focused content.</p>
               <div className="hero-actions">

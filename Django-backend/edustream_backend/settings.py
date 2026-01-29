@@ -53,6 +53,15 @@ INSTALLED_APPS = [
     'activities',
 ]
 
+INSTALLED_APPS += [
+    'django.contrib.sites',
+
+    'allauth',
+    'allauth.account',
+]
+
+SITE_ID = 1
+
 # --------------------------------------------------
 # Middleware
 # --------------------------------------------------
@@ -206,6 +215,12 @@ EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# ACCOUNT_AUTHENTICATION_METHOD = "email"
+# ACCOUNT_USERNAME_REQUIRED = False
+
 
 # --------------------------------------------------
 # Local overrides (optional)
