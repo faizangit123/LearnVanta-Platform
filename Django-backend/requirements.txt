@@ -27,3 +27,7 @@ gunicorn>=21.0
 
 # Auth
 django-allauth==0.61.1
+
+# sendgrid
+django-sendgrid-v5
+
