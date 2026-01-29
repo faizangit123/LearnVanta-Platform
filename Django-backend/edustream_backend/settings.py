@@ -127,6 +127,16 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    
+# Build-time static safety
+if os.environ.get("COLLECTSTATIC") == "1":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "dummy.sqlite3",
+        }
+    }
+    
 
 # --------------------------------------------------
 # Custom User Model
