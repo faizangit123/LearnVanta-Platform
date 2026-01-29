@@ -225,7 +225,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # --------------------------------------------------
 # Email (SendGrid)
 # --------------------------------------------------
-EMAIL_BACKEND = "django_sendgrid_v5.backends.SendgridBackend"
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = "noreply@learnvanta.com"
 
