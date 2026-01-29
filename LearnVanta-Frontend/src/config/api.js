@@ -148,8 +148,11 @@ export const API_ENDPOINTS = {
 // TOKEN MANAGEMENT
 // ============================================
 
-const TOKEN_KEY = 'edustream_auth_token';
-const REFRESH_TOKEN_KEY = 'edustream_refresh_token';
+// const TOKEN_KEY = 'edustream_auth_token';
+// const REFRESH_TOKEN_KEY = 'edustream_refresh_token';
+
+const TOKEN_KEY = 'token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const getAuthToken = () => localStorage.getItem(TOKEN_KEY);
 export const setAuthToken = (token) => localStorage.setItem(TOKEN_KEY, token);

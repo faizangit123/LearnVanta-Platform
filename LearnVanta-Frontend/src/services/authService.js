@@ -475,9 +475,14 @@ export const getUserRole = async (userId) => {
   return user?.role || "user";
 };
 
+// export const isAdmin = (user) => {
+//   return user?.role === "admin";
+// };
+
 export const isAdmin = (user) => {
-  return user?.role === "admin";
+  return user?.is_staff === true || user?.is_superuser === true;
 };
+
 
 export const validateSession = async (user) => {
   if (!API_CONFIG.useMock) {
