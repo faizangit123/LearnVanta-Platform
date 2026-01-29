@@ -24,3 +24,6 @@ whitenoise>=6.5
 
 # Production server
 gunicorn>=21.0
+
+# Auth
+django-allauth==0.61.1
