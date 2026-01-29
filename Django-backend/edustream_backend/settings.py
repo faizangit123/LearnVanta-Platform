@@ -225,21 +225,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # --------------------------------------------------
 # Email (SendGrid)
 # --------------------------------------------------
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django_sendgrid_v5.SendgridBackend"
 
-EMAIL_HOST = "smtp.sendgrid.net"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
-# SendGrid requires literal "apikey" as username
-EMAIL_HOST_USER = "apikey"
-EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
+EMAIL_HOST = "smtp.sendgrid.net"  # ignored but Django expects it
+DEFAULT_FROM_EMAIL = "noreply@learnvanta.com"
 
-DEFAULT_FROM_EMAIL = "no-reply@sendgrid.net"
-
-print("EMAIL_HOST:", EMAIL_HOST)
-print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
-print("EMAIL_HOST_PASSWORD:", EMAIL_HOST_PASSWORD[:5] if EMAIL_HOST_PASSWORD else "NOT SET")
 
 # ACCOUNT_EMAIL_REQUIRED = True
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
