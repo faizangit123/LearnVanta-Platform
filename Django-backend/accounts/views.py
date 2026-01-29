@@ -70,9 +70,24 @@ def register_view(request):
     
     # TODO: Send verification email
     # For development, print the verification link
+    #------------------------------------------------------------------------------
+    # from django.conf import settings                     #mock
+    # frontend_url = settings.FRONTEND_URL
+    # print(f"Verification URL: {frontend_url}/verify-email?token={token}")
+    
+    from django.core.mail import send_mail             # real
     from django.conf import settings
     frontend_url = settings.FRONTEND_URL
-    print(f"Verification URL: {frontend_url}/verify-email?token={token}")
+    verification_url = f"{frontend_url}/verify-email?token={token}"
+    send_mail(
+        subject="Verify your LearnVanta account",
+        message=f"Click the link below to verify your account:\n\n{verification_url}",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[user.email],
+        fail_silently=False
+        )
+    #-----------------------------------------------------------------------------
+
     
     # Log activity
     ActivityLog.objects.create(
@@ -131,11 +146,26 @@ def resend_verification_view(request):
         expires_at=timezone.now() + timedelta(hours=24)
     )
     
-    from django.conf import settings
-    frontend_url = settings.FRONTEND_URL
-    print(f"Verification URL: {frontend_url}/verify-email?token={token}")
+    #--------------------------------------------------------------------
+    # from django.conf import settings        // mock 
+    # frontend_url = settings.FRONTEND_URL 
+    # print(f"Verification URL: {frontend_url}/verify-email?token={token}")
     
+    from django.core.mail import send_mail
+    from django.conf import settings
+    
+    frontend_url = settings.FRONTEND_URL
+    verification_url = f"{frontend_url}/verify-email?token={token}"
+    send_mail(
+        subject="Verify your LearnVanta account",
+        message=f"Click the link below to verify your account:\n\n{verification_url}",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[user.email],
+        fail_silently=False,
+        )
     return Response({'message': 'Verification email sent'})
+#-------------------------------------------------------------------------
+    
 
 
 @api_view(['POST'])
@@ -157,11 +187,25 @@ def password_reset_view(request):
         token=token,
         expires_at=timezone.now() + timedelta(hours=1)
     )
+    #---------------------------------------------------------------------------------
+    # from django.conf import settings         #mock
+    # frontend_url = settings.FRONTEND_URL
+    # print(f"Password Reset URL: {frontend_url}/reset-password?token={token}")
     
+    from django.core.mail import send_mail     #real
     from django.conf import settings
-    frontend_url = settings.FRONTEND_URL
-    print(f"Password Reset URL: {frontend_url}/reset-password?token={token}")
     
+    frontend_url = settings.FRONTEND_URL
+    reset_url = f"{frontend_url}/reset-password?token={token}"
+    send_mail(
+        subject="Reset your LearnVanta password",
+        message=f"Click the link below to reset your password:\n\n{reset_url}",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[user.email],
+        fail_silently=False,
+        )
+
+    #-------------------------------------------------------------------------------
     return Response({'message': 'If the email exists, a reset link has been sent'})
 
 
