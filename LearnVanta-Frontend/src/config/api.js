@@ -11,7 +11,7 @@ export const API_CONFIG = {
   
   // Toggle between mock (localStorage) and real API
   // Set VITE_USE_MOCK=false in environment to connect to Django
-  useMock: import.meta.env.VITE_USE_MOCK !== 'false',
+  useMock: String(import.meta.env.VITE_USE_MOCK) === 'true',
   
   // Request timeout in milliseconds
   timeout: 30000,

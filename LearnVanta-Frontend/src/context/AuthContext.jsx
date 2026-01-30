@@ -11,7 +11,7 @@ import {
   registerUser, 
   logoutUser,
   isAdmin as checkIsAdmin,
-  validateSession
+  // validateSession
 } from "../services/authService.js";
 import { 
   API_CONFIG, 
