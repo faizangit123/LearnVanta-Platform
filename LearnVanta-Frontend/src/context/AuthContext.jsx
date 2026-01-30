@@ -34,24 +34,35 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Load user from localStorage on mount
-  useEffect(() => {
+useEffect(() => {
   const initAuth = async () => {
     try {
-      const storedUser = localStorage.getItem("edustream_user");
       const token = getAuthToken();
 
-      if (storedUser && token) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } else {
-        localStorage.removeItem("edustream_user");
-        clearAllTokens();
+      if (!token) {
         setUser(null);
+        return;
       }
+
+      const res = await fetch(
+        "https://learnvanta-platform.onrender.com/api/v1/auth/profile/",
+        {
+          headers: {
+            Authorization: "Token " + token,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Session invalid");
+
+      const userData = await res.json();
+      setUser(userData);
+      localStorage.setItem("edustream_user", JSON.stringify(userData));
     } catch (e) {
       console.error("Auth init error:", e);
-      localStorage.removeItem("edustream_user");
+      setUser(null);
       clearAllTokens();
+      localStorage.removeItem("edustream_user");
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +70,7 @@ export const AuthProvider = ({ children }) => {
 
   initAuth();
 }, []);
+
 
   // Login function
   const login = useCallback(async (email, password) => {
