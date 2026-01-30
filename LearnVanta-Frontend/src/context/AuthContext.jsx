@@ -35,48 +35,30 @@ export const AuthProvider = ({ children }) => {
 
   // Load user from localStorage on mount
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const storedUser = localStorage.getItem("edustream_user");
-        
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          
-          // If using real API, validate the session
-          if (!API_CONFIG.useMock) {
-            const token = getAuthToken();
-            if (!token) {
-              // No token, clear user
-              localStorage.removeItem("edustream_user");
-              setUser(null);
-              setIsLoading(false);
-              return;
-            }
-            
-            // Validate session with backend
-            const isValid = await validateSession(parsedUser);
-            if (!isValid) {
-              localStorage.removeItem("edustream_user");
-              clearAllTokens();
-              setUser(null);
-              setIsLoading(false);
-              return;
-            }
-          }
-          
-          setUser(parsedUser);
-        }
-      } catch (e) {
-        console.error("Auth init error:", e);
+  const initAuth = async () => {
+    try {
+      const storedUser = localStorage.getItem("edustream_user");
+      const token = getAuthToken();
+
+      if (storedUser && token) {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } else {
         localStorage.removeItem("edustream_user");
         clearAllTokens();
-      } finally {
-        setIsLoading(false);
+        setUser(null);
       }
-    };
+    } catch (e) {
+      console.error("Auth init error:", e);
+      localStorage.removeItem("edustream_user");
+      clearAllTokens();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    initAuth();
-  }, []);
+  initAuth();
+}, []);
 
   // Login function
   const login = useCallback(async (email, password) => {
