@@ -37,10 +37,18 @@ def watch_history_delete(request, video_id):
     WatchHistory.objects.filter(user=user, video_id=video_id).delete()
     return Response({"success": True})
 
+# ---------- STUB ENDPOINTS (Step 1) ----------
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def favorites_list(request):
     return Response([])
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def favorites_toggle(request, video_id):
+    return Response({"success": True})
 
 
 @api_view(['GET'])
