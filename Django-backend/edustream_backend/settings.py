@@ -181,24 +181,21 @@ FRONTEND_URL = os.environ.get(
 )
 
 # --------------------------------------------------
-# CORS
+# CORS (FINAL WORKING CONFIG)
 # --------------------------------------------------
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "https://learnvanta-platform.onrender.com",
-    "https://learn-vanta-platform.vercel.app",
-    "https://learn-vanta-platform-eko706jf-md-faizans-projects-0e6e5c7d.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:3000",
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+    r"^http://localhost:5173$",
+    r"^http://localhost:3000$",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://*.vercel.app",
     "https://learnvanta-platform.onrender.com",
-    "https://learn-vanta-platform.vercel.app",
-    "https://learn-vanta-platform-eko706jf-md-faizans-projects-0e6e5c7d.vercel.app",
 ]
 
 from corsheaders.defaults import default_headers
