@@ -25,7 +25,8 @@ export const API_CONFIG = {
 // ============================================
 
 export const API_ENDPOINTS = {
-  // Authentication
+
+  // Authentication (unchanged)
   auth: {
     login: '/auth/login/',
     register: '/auth/register/',
@@ -38,111 +39,74 @@ export const API_ENDPOINTS = {
     tokenRefresh: '/auth/token/refresh/',
     validateToken: '/auth/token/validate/',
   },
-  
-  // User Management (Admin)
-  users: {
-    list: '/admin/users/',
-    detail: (id) => `/admin/users/${id}/`,
-    role: (id) => `/admin/users/${id}/role/`,
-    delete: (id) => `/admin/users/${id}/`,
-  },
-  
-  // Content - Classes, Subjects, Chapters
+
+  // Content - Classes, Subjects, Chapters (unchanged)
   classes: {
-    list: '/classes/',
-    detail: (id) => `/classes/${id}/`,
+    list: '/content/classes/',
+    detail: (id) => `/content/classes/${id}/`,
   },
+
   subjects: {
-    list: '/subjects/',
-    detail: (id) => `/subjects/${id}/`,
-    byClass: (classId) => `/classes/${classId}/subjects/`,
+    byClass: (classId) => `/content/subjects/${classId}/`,
   },
+
   chapters: {
-    list: '/chapters/',
-    detail: (id) => `/chapters/${id}/`,
-    bySubject: (subjectId) => `/subjects/${subjectId}/chapters/`,
+    bySubject: (subjectId) => `/content/chapters/${subjectId}/`,
   },
-  
-  // Videos
+
+  // =========================
+  // VIDEOS (FIXED)
+  // =========================
   videos: {
-    list: '/videos/',
-    detail: (id) => `/videos/${id}/`,
-    search: '/videos/search/',
-    trending: '/videos/trending/',
-    recent: '/videos/recent/',
-    byChapter: (chapterId) => `/chapters/${chapterId}/videos/`,
+    byChapter: (chapterId) => `/content/videos/chapter/${chapterId}/`,
+    detail: (id) => `/content/videos/${id}/`,
+    trending: `/content/videos/trending/`,
   },
-  
-  // Playlists (Admin-managed)
-  playlists: {
-    list: '/playlists/',
-    detail: (id) => `/playlists/${id}/`,
-    videos: (id) => `/playlists/${id}/videos/`,
-    addVideo: (id) => `/playlists/${id}/add-video/`,
-    removeVideo: (id) => `/playlists/${id}/remove-video/`,
-    reorder: (id) => `/playlists/${id}/reorder/`,
-  },
-  
-  // User Playlists (User-created)
-  userPlaylists: {
-    list: '/user/playlists/',
-    detail: (id) => `/user/playlists/${id}/`,
-    addVideo: (id) => `/user/playlists/${id}/add-video/`,
-    removeVideo: (id) => `/user/playlists/${id}/remove-video/`,
-    reorder: (id) => `/user/playlists/${id}/reorder/`,
-  },
-  
-  // Watch History
+
+  // =========================
+  // USER DATA (ALREADY OK)
+  // =========================
   history: {
     list: '/user/history/',
     add: '/user/history/',
     remove: (videoId) => `/user/history/${videoId}/`,
-    clear: '/user/history/clear/',
   },
-  
-  // Watch Progress
+
   progress: {
     get: (videoId) => `/user/progress/${videoId}/`,
     update: (videoId) => `/user/progress/${videoId}/`,
   },
-  
-  // Favorites
+
   favorites: {
     list: '/user/favorites/',
-    add: '/user/favorites/',
-    remove: (videoId) => `/user/favorites/${videoId}/`,
     toggle: (videoId) => `/user/favorites/${videoId}/toggle/`,
-    check: (videoId) => `/user/favorites/${videoId}/check/`,
   },
-  
-  // Notes
+
   notes: {
-    list: '/user/notes/',
     byVideo: (videoId) => `/user/notes/video/${videoId}/`,
-    detail: (id) => `/user/notes/${id}/`,
-    create: '/user/notes/',
-    update: (id) => `/user/notes/${id}/`,
-    delete: (id) => `/user/notes/${id}/`,
   },
-  
-  // Resources (PDFs)
+
+  // =========================
+  // RESOURCES (FIXED)
+  // =========================
   resources: {
-    list: '/resources/',
-    byChapter: (chapterId) => `/chapters/${chapterId}/resources/`,
-    detail: (id) => `/resources/${id}/`,
-    upload: '/resources/',
-    download: (id) => `/resources/${id}/download/`,
-    trackDownload: (id) => `/resources/${id}/track-download/`,
+    byChapter: (chapterId) => `/resources/chapters/${chapterId}/resources/`,
+    detail: (id) => `/resources/resources/${id}/`,
+    upload: '/resources/resources/upload/',
+    trackDownload: (id) => `/resources/resources/${id}/track-download/`,
   },
-  
-  // Activity Logs (Admin)
+
+  // =========================
+  // ACTIVITIES (FIXED)
+  // =========================
   activities: {
-    list: '/admin/activities/',
-    recent: '/admin/activities/recent/',
-    stats: '/admin/activities/stats/',
-    clear: '/admin/activities/clear/',
+    list: '/activities/activities/',
+    create: '/activities/activities/create/',
+    clear: '/activities/activities/clear/',
   },
+
 };
+
 
 // ============================================
 // TOKEN MANAGEMENT
