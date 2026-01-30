@@ -10,7 +10,6 @@ from .models import (
     Note,
     UserPlaylist
 )
-
 from .serializers import (
     WatchHistorySerializer,
     WatchProgressSerializer,
@@ -18,7 +17,6 @@ from .serializers import (
     NoteSerializer,
     UserPlaylistSerializer
 )
-
 from content.models import Video
 
 
@@ -44,6 +42,7 @@ def watch_history_list(request):
             user=user,
             video=video
         )
+
         serializer = WatchHistorySerializer(obj)
         return Response(serializer.data)
 
@@ -56,6 +55,39 @@ def watch_history_delete(request, video_id):
         video_id=video_id
     ).delete()
     return Response({"success": True})
+
+
+# ---------------------------
+# CONTINUE WATCHING (PROGRESS)
+# ---------------------------
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def progress_detail(request, video_id):
+    user = request.user
+    video = get_object_or_404(Video, id=video_id)
+
+    if request.method == 'GET':
+        obj, _ = WatchProgress.objects.get_or_create(
+            user=user,
+            video=video
+        )
+        serializer = WatchProgressSerializer(obj)
+        return Response(serializer.data)
+
+    if request.method == 'POST':
+        obj, _ = WatchProgress.objects.get_or_create(
+            user=user,
+            video=video
+        )
+
+        obj.current_time = request.data.get('current_time', obj.current_time)
+        obj.duration = request.data.get('duration', obj.duration)
+        obj.percentage = request.data.get('percentage', obj.percentage)
+        obj.save()
+
+        serializer = WatchProgressSerializer(obj)
+        return Response(serializer.data)
 
 
 # ---------------------------
@@ -73,69 +105,59 @@ def favorites_list(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def favorites_toggle(request, video_id):
+    user = request.user
     video = get_object_or_404(Video, id=video_id)
 
-    fav = Favorite.objects.filter(
-        user=request.user,
-        video=video
-    ).first()
+    fav = Favorite.objects.filter(user=user, video=video)
 
-    if fav:
+    if fav.exists():
         fav.delete()
         return Response({"favorited": False})
     else:
-        Favorite.objects.create(
-            user=request.user,
-            video=video
-        )
+        Favorite.objects.create(user=user, video=video)
         return Response({"favorited": True})
-
-
-# ---------------------------
-# WATCH PROGRESS
-# ---------------------------
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def progress_detail(request, video_id):
-    progress = WatchProgress.objects.filter(
-        user=request.user,
-        video_id=video_id
-    ).first()
-
-    if not progress:
-        return Response({
-            "current_time": 0,
-            "duration": 0,
-            "percentage": 0
-        })
-
-    serializer = WatchProgressSerializer(progress)
-    return Response(serializer.data)
 
 
 # ---------------------------
 # NOTES
 # ---------------------------
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def notes_by_video(request, video_id):
-    notes = Note.objects.filter(
-        user=request.user,
-        video_id=video_id
-    )
-    serializer = NoteSerializer(notes, many=True)
-    return Response(serializer.data)
+    user = request.user
+    video = get_object_or_404(Video, id=video_id)
+
+    if request.method == 'GET':
+        notes = Note.objects.filter(user=user, video=video)
+        serializer = NoteSerializer(notes, many=True)
+        return Response(serializer.data)
+
+    if request.method == 'POST':
+        serializer = NoteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=user, video=video)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 
 
 # ---------------------------
 # USER PLAYLISTS
 # ---------------------------
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def playlists_list(request):
-    playlists = UserPlaylist.objects.filter(user=request.user)
-    serializer = UserPlaylistSerializer(playlists, many=True)
-    return Response(serializer.data)
+    user = request.user
+
+    if request.method == 'GET':
+        playlists = UserPlaylist.objects.filter(user=user)
+        serializer = UserPlaylistSerializer(playlists, many=True)
+        return Response(serializer.data)
+
+    if request.method == 'POST':
+        serializer = UserPlaylistSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=user)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
