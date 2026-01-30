@@ -184,6 +184,7 @@ FRONTEND_URL = os.environ.get(
 # CORS
 # --------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
+    "https://learn-vanta-platform-eko706jf-md-faizans-projects-0e6e5c7d.vercel.app",
     "https://learn-vanta-platform.vercel.app",
     "http://localhost:5173",
     "http://localhost:3000",
