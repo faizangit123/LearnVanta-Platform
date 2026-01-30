@@ -196,7 +196,29 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://learnvanta-platform.onrender.com",
     "https://learn-vanta-platform.vercel.app",
+    "https://learn-vanta-platform-eko706jf-md-faizans-projects-0e6e5c7d.vercel.app",
 ]
+
+
+CORS_ALLOWED_ORIGINS += [
+    "https://learnvanta-platform.onrender.com",
+]
+
+from corsheaders.defaults import default_headers
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "authorization",
+]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
