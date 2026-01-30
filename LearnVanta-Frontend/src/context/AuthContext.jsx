@@ -1,8 +1,5 @@
 /**
  * AuthContext - Provides authentication state globally
- * 
- * Supports both mock localStorage auth and Django API auth.
- * Token management is handled by src/config/api.js
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
@@ -11,7 +8,6 @@ import {
   registerUser, 
   logoutUser,
   isAdmin as checkIsAdmin,
-  // validateSession
 } from "../services/authService.js";
 import { 
   API_CONFIG, 
@@ -33,46 +29,45 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
-useEffect(() => {
-  const initAuth = async () => {
-    try {
-      const token = getAuthToken();
+  // 🔐 Validate token on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const token = getAuthToken();
 
-      if (!token) {
-        setUser(null);
-        return;
-      }
-
-      const res = await fetch(
-        "https://learnvanta-platform.onrender.com/api/v1/auth/profile/",
-        {
-          headers: {
-            Authorization: "Token " + token,
-          },
+        if (!token) {
+          setUser(null);
+          return;
         }
-      );
 
-      if (!res.ok) throw new Error("Session invalid");
+        const res = await fetch(
+          `${API_CONFIG.baseUrl}${API_CONFIG.apiPrefix}/auth/profile/`,
+          {
+            headers: {
+              Authorization: "Token " + token,
+            },
+          }
+        );
 
-      const userData = await res.json();
-      setUser(userData);
-      localStorage.setItem("edustream_user", JSON.stringify(userData));
-    } catch (e) {
-      console.error("Auth init error:", e);
-      setUser(null);
-      clearAllTokens();
-      localStorage.removeItem("edustream_user");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        if (!res.ok) throw new Error("Session invalid");
 
-  initAuth();
-}, []);
+        const userData = await res.json();
+        setUser(userData);
+        localStorage.setItem("edustream_user", JSON.stringify(userData));
+      } catch (e) {
+        console.error("Auth init error:", e);
+        setUser(null);
+        clearAllTokens();
+        localStorage.removeItem("edustream_user");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    initAuth();
+  }, []);
 
-  // Login function
+  // Login
   const login = useCallback(async (email, password) => {
     const userData = await loginUser(email, password);
     setUser(userData);
@@ -80,10 +75,9 @@ useEffect(() => {
     return userData;
   }, []);
 
-  // Signup function
+  // Signup
   const signup = useCallback(async (name, email, password) => {
     const userData = await registerUser(name, email, password);
-    // Don't auto-login if verification is pending
     if (!userData.verificationPending) {
       setUser(userData);
       localStorage.setItem("edustream_user", JSON.stringify(userData));
@@ -91,40 +85,22 @@ useEffect(() => {
     return userData;
   }, []);
 
-  // Logout function
+  // Logout
   const logout = useCallback(async () => {
     try {
       await logoutUser();
-    } catch (e) {
-      // Ignore logout errors
-    }
+    } catch {}
     setUser(null);
     localStorage.removeItem("edustream_user");
     clearAllTokens();
   }, []);
 
-  // Update user data (after profile changes)
+  // Update user
   const updateUser = useCallback((updatedUser) => {
     setUser(updatedUser);
     localStorage.setItem("edustream_user", JSON.stringify(updatedUser));
   }, []);
 
-  // Refresh user data from server (for real API mode)
-  const refreshUser = useCallback(async () => {
-    if (API_CONFIG.useMock || !user) return;
-    
-    try {
-      // In real API, fetch fresh user data
-      // const freshUser = await apiRequest(API_ENDPOINTS.auth.profile);
-      // updateUser(freshUser);
-    } catch (e) {
-      console.error("Failed to refresh user:", e);
-    }
-  }, [user]);
-
-  // Check if current user is admin
-  // IMPORTANT: In production, this should be validated server-side
-  // The role comes from the user_roles table, not client storage
   const isAdmin = checkIsAdmin(user);
 
   const value = {
@@ -136,8 +112,10 @@ useEffect(() => {
     signup,
     logout,
     updateUser,
-    refreshUser,
   };
+
+  // 🛑 THIS PREVENTS WHITE SCREENS
+  if (isLoading) return null;
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
