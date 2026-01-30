@@ -20,14 +20,13 @@ urlpatterns = [
     # Auth APIs
     path("api/v1/auth/", include("accounts.urls")),
     path('api/v1/user/', include('userdata.urls')),
+    path("api/v1/content/", include("content.urls")),
+    path("api/v1/resources/", include("resources.urls")),
+    path("api/v1/activities/", include("activities.urls")),
     
     # Auth APIs (allauth: email verification + social login)
     # path("api/v1/auth/", include("allauth.urls")),
-
-    # Future APIs (examples)
-    # path("api/v1/content/", include("content.urls")),
-    # path("api/v1/resources/", include("resources.urls")),
-    # path("api/v1/activities/", include("activities.urls")),
+    
 ]
 
 # Media files (local development only)
