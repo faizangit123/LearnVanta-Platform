@@ -36,3 +36,26 @@ def watch_history_delete(request, video_id):
     user = request.user
     WatchHistory.objects.filter(user=user, video_id=video_id).delete()
     return Response({"success": True})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def favorites_list(request):
+    return Response([])
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def playlists_list(request):
+    return Response([])
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def progress_detail(request, video_id):
+    return Response({"video": video_id, "progress": 0})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def notes_by_video(request, video_id):
+    return Response([])
