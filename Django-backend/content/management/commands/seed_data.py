@@ -6,6 +6,11 @@ class Command(BaseCommand):
     help = 'Seed initial data for classes, subjects, chapters, and videos'
 
     def handle(self, *args, **kwargs):
+        # Prevent duplicate seeding
+        if Class.objects.exists():
+            self.stdout.write("Data already exists, skipping seeding.")
+            return
+
         self.stdout.write('Seeding data...')
 
         # Create Classes
@@ -29,7 +34,7 @@ class Command(BaseCommand):
             }
         )
 
-        # Create Subjects for Class 11
+        # Subjects
         physics_11, _ = Subject.objects.get_or_create(
             id='physics-11',
             defaults={
@@ -66,7 +71,6 @@ class Command(BaseCommand):
             }
         )
 
-        # Create Subjects for Class 12
         physics_12, _ = Subject.objects.get_or_create(
             id='physics-12',
             defaults={
@@ -103,7 +107,7 @@ class Command(BaseCommand):
             }
         )
 
-        # Create sample chapters for Physics 11
+        # Chapters
         ch1_physics_11, _ = Chapter.objects.get_or_create(
             id='ch-1-physics-11',
             defaults={
@@ -124,7 +128,7 @@ class Command(BaseCommand):
             }
         )
 
-        # Create sample videos
+        # Videos
         Video.objects.get_or_create(
             id='vid-1-physics-11',
             defaults={
@@ -155,10 +159,6 @@ class Command(BaseCommand):
                 'order': 1
             }
         )
-
-        # Update chapter counts
-        physics_11.chapter_count = physics_11.chapters.count()
-        physics_11.save()
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded data!'))
         self.stdout.write(f'Created {Class.objects.count()} classes')

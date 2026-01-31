@@ -14,3 +14,10 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'edustream_backend.settings')
 
 application = get_wsgi_application()
+
+if os.environ.get("RENDER"):
+    try:
+        from django.core.management import call_command
+        call_command("seed_data")
+    except Exception as e:
+        print("Seed error:", e)
