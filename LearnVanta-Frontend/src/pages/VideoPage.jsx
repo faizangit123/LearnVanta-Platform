@@ -12,19 +12,7 @@ import { useWatchProgress } from "../hooks/useWatchProgress";
 import { useMiniPlayer } from "../context/MiniPlayerContext";
 import { useAuth } from "../context/AuthContext";
 import { useAuthPrompt } from "../context/AuthPromptContext";
-import {
-  getVideoById,
-  getChapterById,
-  getSubjectById,
-  getClassById,
-  getVideosByChapter,
-  getVideoEmbedUrl,
-  formatViews,
-  formatDate,
-  getPlaylistForVideo,
-  getPlaylistVideos,
-  getRelatedVideos,
-} from "../data/mockData";
+import { apiRequest } from "../config/api";
 
 // Icons
 const PlayIcon = () => (
@@ -128,22 +116,36 @@ const getVideoTypeBadge = (videoType) => {
 
 const VideoPage = () => {
   const { videoId } = useParams();
-  const video = getVideoById(videoId);
-  const chapter = video ? getChapterById(video.chapterId) : null;
-  const subject = chapter ? getSubjectById(chapter.subjectId) : null;
-  const classData = subject ? getClassById(subject.classId) : null;
+  const [video, setVideo] = useState(null);
+  const [chapter, setChapter] = useState(null);
+  const [subject, setSubject] = useState(null);
+  const [classData, setClassData] = useState(null);
+
+useEffect(() => {
+  apiRequest(`/content/videos/${videoId}/`)
+    .then((data) => {
+      setVideo(data);
+      setChapter(data.chapter);
+      setSubject(data.subject);
+      setClassData(data.class_data);
+    })
+    .catch(() => {
+      setVideo(null);
+    });
+}, [videoId]);
+
   
-  // Check if video is part of a playlist
-  const playlist = video ? getPlaylistForVideo(video.id) : null;
-  const playlistVideos = playlist ? getPlaylistVideos(playlist.id) : [];
+  // // Check if video is part of a playlist
+  // const playlist = video ? getPlaylistForVideo(video.id) : null;
+  // const playlistVideos = playlist ? getPlaylistVideos(playlist.id) : [];
   
-  // Related videos (excludes playlist videos if in playlist)
-  const relatedVideos = video ? getRelatedVideos(video, 5) : [];
+  // // Related videos (excludes playlist videos if in playlist)
+  // const relatedVideos = video ? getRelatedVideos(video, 5) : [];
   
-  // Chapter videos (fallback if no related)
-  const chapterVideos = chapter 
-    ? getVideosByChapter(chapter.id).filter(v => v.id !== videoId).slice(0, 4)
-    : [];
+  // // Chapter videos (fallback if no related)
+  // const chapterVideos = chapter 
+  //   ? getVideosByChapter(chapter.id).filter(v => v.id !== videoId).slice(0, 4)
+  //   : [];
 
   const [isLiked, setIsLiked] = useState(false);
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
@@ -158,7 +160,12 @@ const VideoPage = () => {
   const { openMiniPlayer } = useMiniPlayer();
   const isVideoFavorite = isFavorite(videoId);
 
-  // Load saved progress when video page opens
+  // FIX: async favorite check
+  useEffect(() => {
+    if (!video) return;
+    isFavorite(video.id).then(setIsVideoFavorite);
+  }, [video]);
+
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
@@ -174,7 +181,7 @@ const VideoPage = () => {
         chapterName: chapter.name,
       });
     }
-  }, [videoId]);
+  }, [videoId, video, chapter]);
 
   // Handle video time updates (save progress)
   const handleVideoTimeUpdate = (currentTime, duration) => {
@@ -191,15 +198,16 @@ const VideoPage = () => {
     };
   }, [currentVideoTime, progress.duration]);
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = async () => {
     if (video && chapter) {
-      toggleFavorite({
-        videoId: video.id,
+      const result = await toggleFavorite({
+        id: video.id,   
         title: video.title,
         thumbnail: video.thumbnail,
         duration: video.duration,
         chapterName: chapter.name,
       });
+      setIsVideoFavorite(result.isFavorite);
     }
   };
 
@@ -258,12 +266,11 @@ const VideoPage = () => {
             <div className="video-main" ref={videoPlayerRef}>
               {/* Video Player Component */}
               <VideoPlayer 
-                video={video} 
-                getVideoEmbedUrl={getVideoEmbedUrl}
-                initialTime={progress.currentTime}
-                onTimeUpdate={handleVideoTimeUpdate}
-              />
+               video={video} 
+               initialTime={progress.currentTime}
+               onTimeUpdate={handleVideoTimeUpdate}
 
+               />
               {/* Video Info */}
               <div className="video-info">
                 <div className="video-tags-row">
@@ -282,11 +289,11 @@ const VideoPage = () => {
                   <div className="video-stats-left">
                     <span className="stat-item">
                       <EyeIcon />
-                      {formatViews(video.views)} views
+                      {video.views} views
                     </span>
                     <span className="stat-item">
                       <CalendarIcon />
-                      {formatDate(video.publishedAt)}
+                      {new Date(video.published_at).toLocaleDateString()}
                     </span>
                     <span className="stat-item">
                       <ClockIcon />
@@ -299,7 +306,7 @@ const VideoPage = () => {
                       onClick={() => setIsLiked(!isLiked)}
                     >
                       <ThumbsUpIcon />
-                      <span>{formatViews(video.likes + (isLiked ? 1 : 0))}</span>
+                      <span>{video.likes + (isLiked ? 1 : 0)}</span>
                     </button>
                     <button className="action-btn">
                       <ShareIcon />
@@ -312,7 +319,7 @@ const VideoPage = () => {
                       <HeartIcon filled={isVideoFavorite} />
                       <span>{isVideoFavorite ? 'Saved' : 'Save'}</span>
                     </button>
-                    {video.videoType === "direct" && (
+                    {video.video_type === "direct" && (
                       <button 
                         className="action-btn"
                         onClick={() => openMiniPlayer(video, currentVideoTime)}
@@ -345,14 +352,14 @@ const VideoPage = () => {
                 </div>
 
                 {/* Resources Section */}
-                <VideoResources resources={video.resources} />
+                <VideoResources resources={video.resources || []} />
 
                 {/* Notes Section */}
                 <VideoNotes
                   videoId={videoId}
                   videoTitle={video.title}
                   currentTime={currentVideoTime}
-                  onSeekToTime={handleSeekToTime}
+                  onSeekToTime={() => videoPlayerRef.current?.scrollIntoView()}
                 />
 
                 <div className="video-chapter-link">
@@ -371,13 +378,15 @@ const VideoPage = () => {
 
             {/* Sidebar - Playlist & Related Videos */}
             <VideoSidebar
-              currentVideo={video}
-              playlist={playlist}
-              playlistVideos={playlistVideos}
-              relatedVideos={relatedVideos}
-              chapterVideos={chapterVideos}
-              chapter={chapter}
+            currentVideo={video}
+            playlist={null}
+            playlistVideos={[]}
+            relatedVideos={[]}
+            chapterVideos={[]}
+            chapter={chapter}
+
             />
+
           </div>
         </div>
       </section>

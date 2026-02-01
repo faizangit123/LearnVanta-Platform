@@ -6,7 +6,7 @@
  * otherwise calls Django REST API.
  */
 
-import { API_CONFIG, API_ENDPOINTS, apiRequest, mockDelay, getAuthToken } from "../config/api.js";
+import { API_CONFIG, apiRequest, mockDelay } from "../config/api.js";
 
 // Resource Types
 export const RESOURCE_TYPES = {
@@ -32,7 +32,7 @@ export const RESOURCE_TYPE_DESCRIPTIONS = {
 // ============================================
 
 const RESOURCE_CONFIG = {
-  maxFileSize: 25 * 1024 * 1024, // 25MB
+  maxFileSize: 25 * 1024 * 1024,
   acceptedTypes: ['application/pdf'],
   storageKey: 'edustream_resources'
 };
@@ -60,21 +60,15 @@ const generateId = () => `res-${Date.now()}-${Math.random().toString(36).substr(
 // UPLOAD OPERATIONS
 // ============================================
 
-/**
- * Upload a new resource
- */
 export const uploadResource = async (file, chapterId, resourceType, title = '') => {
-  // Validate file size
   if (file.size > RESOURCE_CONFIG.maxFileSize) {
     throw new Error(`File size exceeds maximum of ${RESOURCE_CONFIG.maxFileSize / (1024 * 1024)}MB`);
   }
 
-  // Validate file type
   if (!RESOURCE_CONFIG.acceptedTypes.includes(file.type)) {
     throw new Error('Only PDF files are accepted');
   }
 
-  // Validate resource type
   if (!Object.values(RESOURCE_TYPES).includes(resourceType)) {
     throw new Error('Invalid resource type');
   }
@@ -86,13 +80,13 @@ export const uploadResource = async (file, chapterId, resourceType, title = '') 
     formData.append('resource_type', resourceType);
     if (title) formData.append('title', title);
 
-    return apiRequest(API_ENDPOINTS.resources.list, {
+    return apiRequest("/api/v1/resources/resources/upload/", {
       method: 'POST',
       body: formData,
     });
   }
 
-  // Mock implementation
+  // Mock
   await mockDelay(500);
 
   const resource = {
@@ -112,7 +106,6 @@ export const uploadResource = async (file, chapterId, resourceType, title = '') 
 
   const resources = getMockResources();
 
-  // Check if resource of same type exists for chapter
   const existingIndex = resources.findIndex(
     r => r.chapterId === chapterId && r.type === resourceType
   );
@@ -131,12 +124,9 @@ export const uploadResource = async (file, chapterId, resourceType, title = '') 
 // READ OPERATIONS
 // ============================================
 
-/**
- * Get all resources for a chapter
- */
 export const getResourcesByChapter = async (chapterId) => {
   if (!API_CONFIG.useMock) {
-    const data = await apiRequest(API_ENDPOINTS.resources.byChapter(chapterId));
+    const data = await apiRequest(`/api/v1/resources/chapters/${chapterId}/resources/`);
     return {
       notes: data.find(r => r.type === RESOURCE_TYPES.NOTES) || null,
       practice: data.find(r => r.type === RESOURCE_TYPES.PRACTICE) || null,
@@ -154,12 +144,9 @@ export const getResourcesByChapter = async (chapterId) => {
   };
 };
 
-/**
- * Get all resources (for admin)
- */
 export const getAllResources = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.resources.list);
+    return apiRequest("/api/v1/resources/resources/");
   }
 
   return getMockResources();
@@ -169,12 +156,9 @@ export const getAllResources = async () => {
 // UPDATE OPERATIONS
 // ============================================
 
-/**
- * Update resource metadata
- */
 export const updateResource = async (resourceId, data) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.resources.detail(resourceId), {
+    return apiRequest(`/api/v1/resources/resources/${resourceId}/`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -196,12 +180,9 @@ export const updateResource = async (resourceId, data) => {
 // DELETE OPERATIONS
 // ============================================
 
-/**
- * Delete a resource
- */
 export const deleteResource = async (resourceId) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.resources.detail(resourceId), {
+    return apiRequest(`/api/v1/resources/resources/${resourceId}/`, {
       method: 'DELETE',
     });
   }
@@ -216,26 +197,18 @@ export const deleteResource = async (resourceId) => {
 // DOWNLOAD OPERATIONS
 // ============================================
 
-/**
- * Get download URL for a resource
- */
 export const getDownloadUrl = async (resourceId) => {
   if (!API_CONFIG.useMock) {
-    const response = await apiRequest(API_ENDPOINTS.resources.download(resourceId));
-    return response.url;
+    const response = await apiRequest(`/api/v1/resources/resources/${resourceId}/`);
+    return response.file;
   }
 
-  // In mock mode, return null (no actual file stored)
   return null;
 };
 
-/**
- * Track resource download (analytics)
- */
 export const trackDownload = async (resourceId) => {
   if (!API_CONFIG.useMock) {
-    // Fire and forget
-    apiRequest(API_ENDPOINTS.resources.trackDownload(resourceId), {
+    apiRequest(`/api/v1/resources/resources/${resourceId}/track-download/`, {
       method: 'POST',
     }).catch(() => {});
     return;
@@ -253,9 +226,6 @@ export const trackDownload = async (resourceId) => {
 // UTILITY FUNCTIONS
 // ============================================
 
-/**
- * Format file size to human readable string
- */
 export const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -264,14 +234,8 @@ export const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-/**
- * Check if mock mode is enabled
- */
 export const isMockMode = () => API_CONFIG.useMock;
 
-/**
- * Get API configuration (for debugging)
- */
 export const getApiConfig = () => ({
   baseUrl: API_CONFIG.baseUrl,
   useMock: API_CONFIG.useMock,

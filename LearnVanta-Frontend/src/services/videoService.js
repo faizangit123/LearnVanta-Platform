@@ -6,7 +6,7 @@
  * otherwise calls Django REST API.
  */
 
-import { API_CONFIG, API_ENDPOINTS, apiRequest, mockDelay } from "../config/api.js";
+import { API_CONFIG, apiRequest, mockDelay } from "../config/api.js";
 
 // Mock storage keys
 const WATCH_HISTORY_KEY = 'video_watch_history';
@@ -19,7 +19,7 @@ const WATCH_PROGRESS_KEY = 'video_watch_progress';
 
 export const getWatchHistory = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.history.list);
+    return apiRequest("/api/v1/history/");
   }
 
   await mockDelay();
@@ -29,7 +29,7 @@ export const getWatchHistory = async () => {
 
 export const addToWatchHistory = async (video) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.history.add, {
+    return apiRequest("/api/v1/history/add/", {
       method: 'POST',
       body: JSON.stringify({
         video_id: video.id,
@@ -44,7 +44,6 @@ export const addToWatchHistory = async (video) => {
   await mockDelay();
   const history = await getWatchHistory();
   
-  // Remove if already exists (to move to top)
   const filtered = history.filter(item => item.videoId !== video.id);
   
   const historyItem = {
@@ -57,7 +56,6 @@ export const addToWatchHistory = async (video) => {
     progress: 0
   };
   
-  // Add to beginning, limit to 50 items
   const updated = [historyItem, ...filtered].slice(0, 50);
   localStorage.setItem(WATCH_HISTORY_KEY, JSON.stringify(updated));
   return updated;
@@ -65,7 +63,7 @@ export const addToWatchHistory = async (video) => {
 
 export const removeFromWatchHistory = async (videoId) => {
   if (!API_CONFIG.useMock) {
-    await apiRequest(API_ENDPOINTS.history.remove(videoId), {
+    await apiRequest(`/api/v1/history/${videoId}/remove/`, {
       method: 'DELETE',
     });
     return getWatchHistory();
@@ -80,7 +78,7 @@ export const removeFromWatchHistory = async (videoId) => {
 
 export const clearWatchHistory = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.history.clear, {
+    return apiRequest("/api/v1/history/clear/", {
       method: 'POST',
     });
   }
@@ -97,7 +95,7 @@ export const clearWatchHistory = async () => {
 export const getWatchProgress = async (videoId) => {
   if (!API_CONFIG.useMock) {
     try {
-      return await apiRequest(API_ENDPOINTS.progress.get(videoId));
+      return await apiRequest(`/api/v1/progress/${videoId}/`);
     } catch {
       return { currentTime: 0, duration: 0, percentage: 0 };
     }
@@ -117,7 +115,7 @@ export const updateWatchProgress = async (videoId, currentTime, duration) => {
   };
 
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.progress.update(videoId), {
+    return apiRequest(`/api/v1/progress/${videoId}/update/`, {
       method: 'POST',
       body: JSON.stringify({
         current_time: currentTime,
@@ -137,7 +135,6 @@ export const updateWatchProgress = async (videoId, currentTime, duration) => {
   
   localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(allProgress));
   
-  // Also update in watch history
   const history = await getWatchHistory();
   const historyItem = history.find(item => item.videoId === videoId);
   if (historyItem) {
@@ -154,7 +151,7 @@ export const updateWatchProgress = async (videoId, currentTime, duration) => {
 
 export const getFavorites = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.favorites.list);
+    return apiRequest("/api/v1/favorites/");
   }
 
   await mockDelay();
@@ -164,7 +161,7 @@ export const getFavorites = async () => {
 
 export const addToFavorites = async (video) => {
   if (!API_CONFIG.useMock) {
-    await apiRequest(API_ENDPOINTS.favorites.add, {
+    await apiRequest("/api/v1/favorites/add/", {
       method: 'POST',
       body: JSON.stringify({
         video_id: video.id,
@@ -180,7 +177,6 @@ export const addToFavorites = async (video) => {
   await mockDelay();
   const favorites = await getFavorites();
   
-  // Check if already exists
   if (favorites.some(item => item.videoId === video.id)) {
     return favorites;
   }
@@ -201,7 +197,7 @@ export const addToFavorites = async (video) => {
 
 export const removeFromFavorites = async (videoId) => {
   if (!API_CONFIG.useMock) {
-    await apiRequest(API_ENDPOINTS.favorites.remove(videoId), {
+    await apiRequest(`/api/v1/favorites/${videoId}/remove/`, {
       method: 'DELETE',
     });
     return getFavorites();
@@ -217,7 +213,7 @@ export const removeFromFavorites = async (videoId) => {
 export const isFavorite = async (videoId) => {
   if (!API_CONFIG.useMock) {
     try {
-      const result = await apiRequest(API_ENDPOINTS.favorites.check(videoId));
+      const result = await apiRequest(`/api/v1/favorites/${videoId}/check/`);
       return result.is_favorite;
     } catch {
       return false;
@@ -231,7 +227,7 @@ export const isFavorite = async (videoId) => {
 
 export const toggleFavorite = async (video) => {
   if (!API_CONFIG.useMock) {
-    const result = await apiRequest(API_ENDPOINTS.favorites.toggle(video.id), {
+    const result = await apiRequest(`/api/v1/favorites/${video.id}/toggle/`, {
       method: 'POST',
     });
     const favorites = await getFavorites();

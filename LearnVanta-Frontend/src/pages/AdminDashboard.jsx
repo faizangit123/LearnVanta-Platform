@@ -190,7 +190,9 @@ const getActivityIcon = (type) => {
 };
 
 const AdminDashboard = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isLoading } = useAuth();
+  const isAdmin = currentUser?.is_admin === true;
+
   const [activeTab, setActiveTab] = useState("overview");
   
   // Users state
@@ -591,6 +593,17 @@ const AdminDashboard = () => {
     { label: "Total Views", value: formatNumber(adminStats.totalViews), icon: <EyeIcon />, color: "success", change: "+18%" },
     { label: "Active Classes", value: adminStats.totalClasses, icon: <BookIcon />, color: "warning", change: "0" },
   ];
+
+  if (!isLoading && !isAdmin) {
+  return (
+    <MainLayout>
+      <div style={{ padding: "4rem", textAlign: "center" }}>
+        <h1>Access Denied</h1>
+        <p>You are not allowed to view this page.</p>
+      </div>
+    </MainLayout>
+  );
+}
 
   return (
     <MainLayout>

@@ -12,7 +12,8 @@ import {
 import { 
   API_CONFIG, 
   getAuthToken, 
-  clearAllTokens 
+  clearAllTokens,
+  apiRequest
 } from "../config/api.js";
 
 const AuthContext = createContext(undefined);
@@ -40,18 +41,9 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        const res = await fetch(
-          `${API_CONFIG.baseUrl}${API_CONFIG.apiPrefix}/auth/profile/`,
-          {
-            headers: {
-              Authorization: "Token " + token,
-            },
-          }
-        );
+        // USE CENTRAL API LAYER (IMPORTANT)
+        const userData = await apiRequest("/auth/profile/");
 
-        if (!res.ok) throw new Error("Session invalid");
-
-        const userData = await res.json();
         setUser(userData);
         localStorage.setItem("edustream_user", JSON.stringify(userData));
       } catch (e) {
@@ -101,6 +93,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("edustream_user", JSON.stringify(updatedUser));
   }, []);
 
+  // REAL admin check (Django flags)
   const isAdmin = checkIsAdmin(user);
 
   const value = {

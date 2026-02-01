@@ -6,7 +6,7 @@
  * otherwise calls Django REST API.
  */
 
-import { API_CONFIG, API_ENDPOINTS, apiRequest, mockDelay } from "../config/api.js";
+import { API_CONFIG, apiRequest } from "../config/api.js";
 
 const ACTIVITY_LOG_KEY = "edustream_activity_logs";
 const MAX_LOGS = 100;
@@ -64,36 +64,23 @@ const saveLocalLogs = (logs) => {
 // LOG OPERATIONS
 // ============================================
 
-/**
- * Get all activity logs
- */
 export const getActivityLogs = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.activities.list);
+    return apiRequest("/api/v1/activities/activities/");
   }
 
   return getLocalLogs();
 };
 
-/**
- * Add a new activity log
- * Note: This is called internally by other services
- */
 export const logActivity = (type, details = {}) => {
-  // For API mode, we'd typically send this to the server
-  // But most activities are logged server-side automatically
   if (!API_CONFIG.useMock) {
-    // Fire and forget - don't await
-    apiRequest(API_ENDPOINTS.activities.list, {
+    apiRequest("/api/v1/activities/activities/create/", {
       method: 'POST',
       body: JSON.stringify({ type, details }),
-    }).catch(() => {
-      // Silently fail - activity logging shouldn't break the app
-    });
+    }).catch(() => {});
     return;
   }
 
-  // Mock implementation
   const logs = getLocalLogs();
 
   const newLog = {
@@ -109,48 +96,36 @@ export const logActivity = (type, details = {}) => {
   return newLog;
 };
 
-/**
- * Get recent activity logs with optional limit
- */
 export const getRecentActivities = async (limit = 20) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(`${API_ENDPOINTS.activities.recent}?limit=${limit}`);
+    return apiRequest(`/api/v1/activities/activities/?limit=${limit}`);
   }
 
   const logs = getLocalLogs();
   return logs.slice(0, limit);
 };
 
-/**
- * Get activities filtered by type
- */
 export const getActivitiesByType = async (type, limit = 20) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(`${API_ENDPOINTS.activities.list}?type=${type}&limit=${limit}`);
+    return apiRequest(`/api/v1/activities/activities/?type=${type}&limit=${limit}`);
   }
 
   const logs = getLocalLogs();
   return logs.filter(log => log.type === type).slice(0, limit);
 };
 
-/**
- * Get activities for a specific user
- */
 export const getUserActivities = async (userId, limit = 20) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(`${API_ENDPOINTS.activities.list}?user_id=${userId}&limit=${limit}`);
+    return apiRequest(`/api/v1/activities/activities/?user_id=${userId}&limit=${limit}`);
   }
 
   const logs = getLocalLogs();
   return logs.filter(log => log.details.userId === userId).slice(0, limit);
 };
 
-/**
- * Clear all activity logs (admin only)
- */
 export const clearActivityLogs = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.activities.clear, {
+    return apiRequest("/api/v1/activities/activities/clear/", {
       method: 'POST',
     });
   }
@@ -159,12 +134,10 @@ export const clearActivityLogs = async () => {
   return { success: true };
 };
 
-/**
- * Get activity statistics
- */
 export const getActivityStats = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.activities.stats);
+    // backend does not have stats endpoint
+    return apiRequest("/api/v1/activities/activities/");
   }
 
   const logs = getLocalLogs();

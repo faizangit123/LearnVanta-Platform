@@ -32,6 +32,19 @@ const saveLocalPlaylists = (userId, playlists) => {
 };
 
 // ============================================
+// 🔧 ADDED: Normalizer (API vs UI shape)
+// ============================================
+
+const normalizePlaylist = (playlist) => ({
+  id: playlist.id,
+  name: playlist.name || playlist.title, // backend may use title
+  description: playlist.description || "",
+  videoIds: playlist.videoIds || playlist.video_ids || [],
+  createdAt: playlist.createdAt || playlist.created_at || new Date().toISOString(),
+  updatedAt: playlist.updatedAt || playlist.updated_at || new Date().toISOString(),
+});
+
+// ============================================
 // MAIN HOOK
 // ============================================
 
@@ -51,7 +64,8 @@ export const useUserPlaylists = () => {
     try {
       if (!API_CONFIG.useMock) {
         const data = await apiRequest(API_ENDPOINTS.userPlaylists.list);
-        setPlaylists(data || []);
+        const normalized = (data || []).map(normalizePlaylist); // 🔧 CHANGED
+        setPlaylists(normalized);
       } else {
         setPlaylists(getLocalPlaylists(user.id));
       }
@@ -86,8 +100,10 @@ export const useUserPlaylists = () => {
         method: 'POST',
         body: JSON.stringify({ name: name.trim(), description: description.trim() }),
       });
-      setPlaylists(prev => [newPlaylist, ...prev]);
-      return newPlaylist;
+
+      const normalized = normalizePlaylist(newPlaylist); // 🔧 ADDED
+      setPlaylists(prev => [normalized, ...prev]);
+      return normalized;
     }
 
     // Mock implementation
@@ -112,8 +128,10 @@ export const useUserPlaylists = () => {
         method: 'PATCH',
         body: JSON.stringify(updates),
       });
-      setPlaylists(prev => prev.map(p => p.id === playlistId ? updated : p));
-      return updated;
+
+      const normalized = normalizePlaylist(updated); // 🔧 ADDED
+      setPlaylists(prev => prev.map(p => p.id === playlistId ? normalized : p));
+      return normalized;
     }
 
     const index = playlists.findIndex(p => p.id === playlistId);
@@ -201,13 +219,13 @@ export const useUserPlaylists = () => {
     return true;
   }, [playlists, savePlaylists, loadPlaylists]);
 
-  // Check if video is in any playlist
+  // Check if video is in playlist
   const isVideoInPlaylist = useCallback((playlistId, videoId) => {
     const playlist = playlists.find(p => p.id === playlistId);
     return playlist?.videoIds.includes(videoId) || false;
   }, [playlists]);
 
-  // Get playlists containing a specific video
+  // Get playlists containing a video
   const getPlaylistsForVideo = useCallback((videoId) => {
     return playlists.filter(p => p.videoIds.includes(videoId));
   }, [playlists]);
@@ -228,7 +246,7 @@ export const useUserPlaylists = () => {
     };
   }, [playlists]);
 
-  // Reorder videos in playlist
+  // Reorder videos
   const reorderVideos = useCallback(async (playlistId, newVideoIds) => {
     if (!API_CONFIG.useMock) {
       await apiRequest(API_ENDPOINTS.userPlaylists.reorder(playlistId), {

@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { API_CONFIG, API_ENDPOINTS, apiRequest, mockDelay } from "../config/api.js";
+import { API_CONFIG, API_ENDPOINTS, apiRequest } from "../config/api.js";
 
 const STORAGE_KEY = "edustream_video_notes";
 
@@ -28,6 +28,20 @@ const saveLocalNotes = (allNotes) => {
 };
 
 // ============================================
+// 🔧 ADDED: Normalizer (API vs UI shape)
+// ============================================
+
+const normalizeNote = (note) => ({
+  id: note.id,
+  content: note.content,
+  timestamp: note.timestamp ?? null,
+  createdAt: note.createdAt ?? note.created_at ?? new Date().toISOString(),
+  updatedAt: note.updatedAt ?? note.updated_at ?? new Date().toISOString(),
+  isPinned: note.isPinned ?? note.is_pinned ?? false,
+  isArchived: note.isArchived ?? note.is_archived ?? false,
+});
+
+// ============================================
 // MAIN HOOK
 // ============================================
 
@@ -42,7 +56,8 @@ export const useVideoNotes = (videoId) => {
       try {
         if (!API_CONFIG.useMock) {
           const data = await apiRequest(API_ENDPOINTS.notes.byVideo(videoId));
-          setNotes(data || []);
+          const normalized = (data || []).map(normalizeNote); // 🔧 CHANGED
+          setNotes(normalized);
         } else {
           const allNotes = getLocalNotes();
           setNotes(allNotes[videoId] || []);
@@ -80,8 +95,10 @@ export const useVideoNotes = (videoId) => {
           timestamp,
         }),
       });
-      setNotes(prev => [...prev, newNote]);
-      return newNote;
+
+      const normalized = normalizeNote(newNote); // 🔧 ADDED
+      setNotes(prev => [...prev, normalized]);
+      return normalized;
     }
 
     // Mock implementation
@@ -189,29 +206,19 @@ export const useVideoNotes = (videoId) => {
 // UTILITY FUNCTIONS
 // ============================================
 
-/**
- * Get all notes across all videos
- */
 export const getAllNotes = async () => {
   if (!API_CONFIG.useMock) {
     return apiRequest(API_ENDPOINTS.notes.list);
   }
-
   return getLocalNotes();
 };
 
-/**
- * Save all notes (used for bulk operations)
- */
 export const saveAllNotes = (allNotes) => {
   if (API_CONFIG.useMock) {
     saveLocalNotes(allNotes);
   }
 };
 
-/**
- * Get notes count for a specific video
- */
 export const getNotesCount = (videoId) => {
   try {
     const allNotes = getLocalNotes();
@@ -221,12 +228,8 @@ export const getNotesCount = (videoId) => {
   }
 };
 
-/**
- * Delete all notes for a specific video
- */
 export const clearVideoNotes = async (videoId) => {
   if (!API_CONFIG.useMock) {
-    // In real API, this would be a bulk delete endpoint
     const notes = await apiRequest(API_ENDPOINTS.notes.byVideo(videoId));
     await Promise.all(
       notes.map(note => 

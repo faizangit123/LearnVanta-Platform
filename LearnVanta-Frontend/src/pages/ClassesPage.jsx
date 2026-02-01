@@ -158,8 +158,8 @@ const ClassesPage = () => {
               <div className="feature-icon purple">
                 <StarIcon />
               </div>
-              <h3>Expert Teachers</h3>
-              <p>Learn from experienced educators</p>
+              <h3>Teacher</h3>
+              <p>Learn from experienced educator</p>
             </div>
           </div>
         </div>

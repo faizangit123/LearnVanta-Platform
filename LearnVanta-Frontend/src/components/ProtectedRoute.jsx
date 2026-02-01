@@ -78,7 +78,7 @@ const ProtectedRoute = ({
   }
 
   // Show empty state for unauthenticated users (modal will appear)
-  if (requireAuth && !isAuthenticated) {
+  if (requireAuth && (!isAuthenticated || !user)) {
     return (
       <MainLayout>
         <section className="section">
@@ -135,7 +135,7 @@ const ProtectedRoute = ({
   }
 
   // Check admin role
-  if (requireAdmin && !isAdmin) {
+   if (requireAdmin && (!isAuthenticated || !user || !isAdmin)) {
     return (
       <div className="access-denied">
         <div className="access-denied-content">

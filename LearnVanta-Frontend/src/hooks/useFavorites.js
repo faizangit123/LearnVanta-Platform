@@ -16,7 +16,7 @@ export const useFavorites = () => {
     setIsLoading(true);
     try {
       const data = await videoService.getFavorites();
-      setFavorites(data);
+      setFavorites(data || []);
     } catch (error) {
       console.error('Failed to load favorites:', error);
       setFavorites([]);
@@ -32,7 +32,7 @@ export const useFavorites = () => {
   const addFavorite = useCallback(async (video) => {
     try {
       const updated = await videoService.addToFavorites(video);
-      setFavorites(updated);
+      setFavorites(updated || []);
       return true;
     } catch (error) {
       console.error('Failed to add to favorites:', error);
@@ -43,7 +43,7 @@ export const useFavorites = () => {
   const removeFavorite = useCallback(async (videoId) => {
     try {
       const updated = await videoService.removeFromFavorites(videoId);
-      setFavorites(updated);
+      setFavorites(updated || []);
       return true;
     } catch (error) {
       console.error('Failed to remove from favorites:', error);
@@ -54,16 +54,20 @@ export const useFavorites = () => {
   const toggleFavorite = useCallback(async (video) => {
     try {
       const result = await videoService.toggleFavorite(video);
-      setFavorites(result.favorites);
-      return result.isFavorite;
+      setFavorites(result.favorites || []);
+      return result;   //  return full object
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
-      return null;
+      return { favorites: [], isFavorite: false };
     }
   }, []);
 
+  // Django-compatible favorite check
   const checkIsFavorite = useCallback((videoId) => {
-    return favorites.some(item => item.videoId === videoId);
+    return favorites.some(item =>
+      item.video?.id === videoId ||   // Django
+      item.videoId === videoId        // mock
+    );
   }, [favorites]);
 
   return {

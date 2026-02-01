@@ -12,11 +12,23 @@ export const useWatchHistory = () => {
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const normalizeHistory = (data = []) => {
+    return data.map(item => ({
+      ...item,
+      videoId: item.video?.id ?? item.videoId,
+      title: item.video?.title ?? item.title,
+      thumbnail: item.video?.thumbnail ?? item.thumbnail,
+      duration: item.video?.duration ?? item.duration,
+      chapterName: item.video?.chapter?.name ?? item.chapterName,
+      progress: item.progress ?? 0,
+    }));
+  };
+
   const loadHistory = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await videoService.getWatchHistory();
-      setHistory(data);
+      setHistory(normalizeHistory(data));
     } catch (error) {
       console.error('Failed to load watch history:', error);
       setHistory([]);
@@ -32,7 +44,7 @@ export const useWatchHistory = () => {
   const addToHistory = useCallback(async (video) => {
     try {
       const updated = await videoService.addToWatchHistory(video);
-      setHistory(updated);
+      setHistory(normalizeHistory(updated));
     } catch (error) {
       console.error('Failed to add to watch history:', error);
     }
@@ -41,7 +53,7 @@ export const useWatchHistory = () => {
   const removeFromHistory = useCallback(async (videoId) => {
     try {
       const updated = await videoService.removeFromWatchHistory(videoId);
-      setHistory(updated);
+      setHistory(normalizeHistory(updated));
     } catch (error) {
       console.error('Failed to remove from watch history:', error);
     }

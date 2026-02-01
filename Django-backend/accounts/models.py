@@ -21,6 +21,11 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
+    # Single source of truth for admin everywhere
+    @property
+    def is_admin(self):
+        return self.is_staff or self.is_superuser
+
 
 class UserRole(models.Model):
     """
@@ -45,6 +50,22 @@ class UserRole(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.role}"
+
+    # This is where role sync belongs
+    @staticmethod
+    def update_user_role(user, role):
+        UserRole.objects.update_or_create(
+            user=user,
+            defaults={'role': role}
+        )
+
+        # CRITICAL SYNC WITH DJANGO PERMISSIONS
+        if role == UserRole.RoleChoices.ADMIN:
+            user.is_staff = True
+        else:
+            user.is_staff = False
+
+        user.save()
 
 
 class EmailVerificationToken(models.Model):

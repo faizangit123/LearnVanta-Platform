@@ -66,6 +66,7 @@ const GraduationCapIcon = () => (
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const isAdmin = user?.is_admin === true;
   const location = useLocation();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -238,7 +239,7 @@ const Header = () => {
               </div>
 
               <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={styles.menuToggle} aria-label="Toggle menu" className="menu-toggle">
-                {isMobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
+                 ☰ {isMobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
               </button>
             </div>
           </div>

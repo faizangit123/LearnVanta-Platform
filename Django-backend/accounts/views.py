@@ -32,7 +32,6 @@ def login_view(request):
     if not user:
         return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
     
-    # Allow staff/admin users to login without email verification
     if not user.email_verified and not user.is_staff:
         return Response(
             {'detail': 'Please verify your email before signing in.'},
@@ -41,17 +40,19 @@ def login_view(request):
     
     token, _ = Token.objects.get_or_create(user=user)
     
-    # Log activity
     ActivityLog.objects.create(
         type=ActivityLog.ActivityType.USER_LOGIN,
         details={'user_id': str(user.id), 'user_email': user.email}
     )
     
+    
     return Response({
         'token': token.key,
-        'user': UserSerializer(user).data
+        'user': {
+            **UserSerializer(user).data,
+            "is_admin": user.is_staff or user.is_superuser
+        }
     })
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -239,8 +240,12 @@ def password_reset_confirm_view(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
-    request.user.auth_token.delete()
+    try:
+        request.user.auth_token.delete()
+    except:
+        pass
     return Response({'success': True})
+
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
@@ -259,10 +264,12 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         
-        # Log activity
         ActivityLog.objects.create(
             type=ActivityLog.ActivityType.PROFILE_UPDATED,
             details={'user_id': str(request.user.id), 'user_email': request.user.email}
         )
         
-        return Response(UserSerializer(request.user).data)
+        return Response({
+            **UserSerializer(request.user).data,
+            "is_admin": request.user.is_staff or request.user.is_superuser
+        })

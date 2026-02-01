@@ -6,7 +6,7 @@
  * otherwise calls Django REST API.
  */
 
-import { API_CONFIG, API_ENDPOINTS, apiRequest, mockDelay } from "../config/api.js";
+import { API_CONFIG, apiRequest, mockDelay } from "../config/api.js";
 import { playlists as initialPlaylists, videos, chapters } from "../data/mockData.js";
 import { logActivity, ACTIVITY_TYPES } from "./activityLogService.js";
 
@@ -28,7 +28,7 @@ const initializePlaylists = () => {
 
 export const getAllPlaylists = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.playlists.list);
+    return apiRequest("/api/v1/content/playlists/");
   }
 
   await mockDelay(200);
@@ -37,7 +37,7 @@ export const getAllPlaylists = async () => {
 
 export const getPlaylistById = async (playlistId) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.playlists.detail(playlistId));
+    return apiRequest(`/api/v1/content/playlists/${playlistId}/`);
   }
 
   await mockDelay(100);
@@ -48,7 +48,7 @@ export const getPlaylistById = async (playlistId) => {
 export const getPlaylistForVideo = async (videoId) => {
   if (!API_CONFIG.useMock) {
     const playlists = await getAllPlaylists();
-    return playlists.find((p) => p.videoIds?.includes(videoId)) || null;
+    return playlists.find((p) => p.video_ids?.includes(videoId)) || null;
   }
 
   await mockDelay(100);
@@ -58,7 +58,7 @@ export const getPlaylistForVideo = async (videoId) => {
 
 export const getPlaylistVideos = async (playlistId) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.playlists.videos(playlistId));
+    return apiRequest(`/api/v1/content/playlists/${playlistId}/videos/`);
   }
 
   await mockDelay(100);
@@ -74,7 +74,7 @@ export const getPlaylistVideos = async (playlistId) => {
 
 export const getPlaylistsByChapter = async (chapterId) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(`${API_ENDPOINTS.playlists.list}?chapter_id=${chapterId}`);
+    return apiRequest(`/api/v1/content/playlists/?chapter_id=${chapterId}`);
   }
 
   await mockDelay(100);
@@ -92,7 +92,7 @@ export const createPlaylist = async (playlistData) => {
   }
 
   if (!API_CONFIG.useMock) {
-    const response = await apiRequest(API_ENDPOINTS.playlists.list, {
+    const response = await apiRequest("/api/v1/content/playlists/", {
       method: 'POST',
       body: JSON.stringify({
         title: playlistData.title.trim(),
@@ -152,7 +152,7 @@ export const updatePlaylist = async (playlistId, playlistData) => {
   }
 
   if (!API_CONFIG.useMock) {
-    const response = await apiRequest(API_ENDPOINTS.playlists.detail(playlistId), {
+    const response = await apiRequest(`/api/v1/content/playlists/${playlistId}/`, {
       method: 'PATCH',
       body: JSON.stringify({
         title: playlistData.title.trim(),
@@ -173,7 +173,7 @@ export const updatePlaylist = async (playlistId, playlistData) => {
     return response;
   }
 
-  // Mock implementation
+  // Mock implementation (unchanged)
   await mockDelay(300);
 
   const playlists = initializePlaylists();
@@ -207,7 +207,7 @@ export const updatePlaylist = async (playlistId, playlistData) => {
 
 export const addVideoToPlaylist = async (playlistId, videoId) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.playlists.addVideo(playlistId), {
+    return apiRequest(`/api/v1/content/playlists/${playlistId}/add-video/`, {
       method: 'POST',
       body: JSON.stringify({ video_id: videoId }),
     });
@@ -232,7 +232,7 @@ export const addVideoToPlaylist = async (playlistId, videoId) => {
 
 export const removeVideoFromPlaylist = async (playlistId, videoId) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.playlists.removeVideo(playlistId), {
+    return apiRequest(`/api/v1/content/playlists/${playlistId}/remove-video/`, {
       method: 'POST',
       body: JSON.stringify({ video_id: videoId }),
     });
@@ -255,7 +255,7 @@ export const removeVideoFromPlaylist = async (playlistId, videoId) => {
 
 export const reorderPlaylistVideos = async (playlistId, newVideoIds) => {
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.playlists.reorder(playlistId), {
+    return apiRequest(`/api/v1/content/playlists/${playlistId}/reorder/`, {
       method: 'POST',
       body: JSON.stringify({ video_ids: newVideoIds }),
     });
@@ -283,7 +283,7 @@ export const reorderPlaylistVideos = async (playlistId, newVideoIds) => {
 export const deletePlaylist = async (playlistId) => {
   if (!API_CONFIG.useMock) {
     const playlist = await getPlaylistById(playlistId);
-    await apiRequest(API_ENDPOINTS.playlists.detail(playlistId), {
+    await apiRequest(`/api/v1/content/playlists/${playlistId}/`, {
       method: 'DELETE',
     });
 
@@ -298,7 +298,7 @@ export const deletePlaylist = async (playlistId) => {
     return { success: true };
   }
 
-  // Mock implementation
+  // Mock implementation unchanged
   await mockDelay(300);
 
   const playlists = initializePlaylists();

@@ -98,9 +98,12 @@ const AuthPage = () => {
           throw new Error("Passwords do not match");
         }
         const result = await signup(formData.name, formData.email, formData.password);
+
+        // 🔧 Normalize backend response
+        const verificationPending = result.verificationPending || result.verification_pending;
         
         // Check if verification is pending
-        if (result.verificationPending) {
+        if (verificationPending) {
           setVerificationEmail(formData.email);
           setVerificationSent(true);
         } else {
@@ -108,7 +111,12 @@ const AuthPage = () => {
         }
       }
     } catch (err) {
-      setError(err.message);
+      // Real API error support
+      setError(
+        err?.detail ||
+        err?.message ||
+        "Something went wrong. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

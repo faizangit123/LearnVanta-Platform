@@ -3,6 +3,14 @@ from .models import ActivityLog
 
 
 class ActivityLogSerializer(serializers.ModelSerializer):
+    type_label = serializers.CharField(source="get_type_display", read_only=True)
+
     class Meta:
         model = ActivityLog
-        fields = ['id', 'type', 'details', 'timestamp']
+        fields = [
+            'id',
+            'type',
+            'type_label',   # human readable
+            'details',
+            'timestamp'
+        ]

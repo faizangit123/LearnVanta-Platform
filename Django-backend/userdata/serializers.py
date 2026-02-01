@@ -3,6 +3,19 @@ from .models import WatchHistory, WatchProgress, Favorite, Note, UserPlaylist, U
 from content.serializers import VideoSerializer
 
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "username",
+            "is_staff",
+            "is_superuser",
+        ]
 class WatchHistorySerializer(serializers.ModelSerializer):
     video_id = serializers.CharField(source='video.id')
     title = serializers.CharField(source='video.title')

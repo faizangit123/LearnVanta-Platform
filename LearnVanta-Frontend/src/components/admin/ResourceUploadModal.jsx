@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { chapters, getChapterById, getSubjectById } from "../../data/mockData.js";
+import React, { useState, useRef, useEffect } from "react";
+import { chapters as mockChapters, getChapterById, getSubjectById } from "../../data/mockData.js";
 import { 
   uploadResource, 
   RESOURCE_TYPES, 
@@ -7,6 +7,7 @@ import {
   formatFileSize,
   isMockMode
 } from "../../services/resourceService.js";
+import { apiRequest, API_ENDPOINTS } from "../../config/api.js"; // 🔧 ADDED
 
 // Icons
 const XIcon = () => (
@@ -46,6 +47,9 @@ const AlertIcon = () => (
 );
 
 const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }) => {
+  const [chapters, setChapters] = useState([]);        // 🔧 ADDED
+  const [subjects, setSubjects] = useState([]);       // 🔧 ADDED
+
   const [selectedChapter, setSelectedChapter] = useState(editResource?.chapterId || "");
   const [resourceType, setResourceType] = useState(editResource?.type || RESOURCE_TYPES.NOTES);
   const [file, setFile] = useState(null);
@@ -56,6 +60,30 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
   const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
+
+    // ============================================
+  // 🔧 ADDED: Load chapters properly
+  // ============================================
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        if (isMockMode()) {
+          setChapters(mockChapters);
+        } else {
+          const ch = await apiRequest(API_ENDPOINTS.chapters.bySubject("all"));
+          const sub = await apiRequest("/content/subjects/all/");
+          setChapters(ch || []);
+          setSubjects(sub || []);
+        }
+      } catch {
+        setChapters([]);
+        setSubjects([]);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const handleFileSelect = (selectedFile) => {
     setError(null);
@@ -136,8 +164,12 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
     onClose();
   };
 
-  const selectedChapterData = selectedChapter ? getChapterById(selectedChapter) : null;
-  const selectedSubject = selectedChapterData ? getSubjectById(selectedChapterData.subjectId) : null;
+  // ============================================
+  //  FIXED: chapter + subject resolution
+  // ============================================
+
+  const selectedChapterData = chapters.find(c => c.id === selectedChapter);
+  const selectedSubject = subjects.find(s => s.id === selectedChapterData?.subjectId);
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
@@ -156,7 +188,7 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
               <div className="resource-mock-notice">
                 <AlertIcon />
                 <span>
-                  <strong>Demo Mode:</strong> File metadata will be saved, but actual files require a backend connection.
+                  <strong>Demo Mode:</strong> File metadata will be saved.
                 </span>
               </div>
             )}

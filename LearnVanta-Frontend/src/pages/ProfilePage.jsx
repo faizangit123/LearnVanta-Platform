@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { MainLayout } from "../components/layout/index.js";
@@ -41,10 +41,13 @@ const ProfilePage = () => {
   const [avatarMessage, setAvatarMessage] = useState({ type: "", text: "" });
 
   // Redirect if not authenticated
+  useEffect(() => {
   if (!isAuthenticated) {
     navigate("/login");
-    return null;
   }
+}, [isAuthenticated, navigate]);
+
+if (!isAuthenticated) return null;
 
   const handleAvatarChange = async (avatarData) => {
     setIsUploadingAvatar(true);

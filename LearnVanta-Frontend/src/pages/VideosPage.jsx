@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import MainLayout from "../components/layout/MainLayout.jsx";
-import { videos, subjects, classes, chapters } from "../data/mockData.js";
 import { useFavorites } from "../hooks/useFavorites.js";
 import { useWatchHistory } from "../hooks/useWatchHistory.js";
 import VideoCard from "../components/VideoCard.jsx";
 import ContinueWatching from "../components/ContinueWatching.jsx";
 import VideoSearchSuggestions from "../components/VideoSearchSuggestions.jsx";
 import VideoFilters, { DURATION_FILTERS } from "../components/VideoFilters.jsx";
+import { apiRequest } from "../config/api";
+
 
 const ITEMS_PER_PAGE = 12;
 
@@ -51,6 +52,11 @@ const VideoCardSkeleton = () => (
 );
 
 const VideosPage = () => {
+  const [videos, setVideos] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  
   const { isFavorite, toggleFavorite } = useFavorites();
   const { history, removeFromHistory } = useWatchHistory();
   
@@ -76,78 +82,96 @@ const VideosPage = () => {
   const loadMoreRef = useRef(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+    Promise.all([
+      apiRequest("/api/v1/content/videos/"),
+      apiRequest("/api/v1/content/classes/"),
+      apiRequest("/api/v1/content/subjects/"),
+      apiRequest("/api/v1/content/chapters/"),
+    ]).then(([v, c, s, ch]) => {
+      setVideos(v || []);
+      setClasses(c || []);
+      setSubjects(s || []);
+      setChapters(ch || []);
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   useEffect(() => {
     setDisplayCount(ITEMS_PER_PAGE);
   }, [searchQuery, selectedClass, selectedSubject, selectedType, selectedDuration, selectedWatchStatus, sortBy]);
 
+  // correct Django class relation
   const filteredSubjects = useMemo(() => {
     if (selectedClass === "all") return subjects;
-    return subjects.filter((s) => s.classId === selectedClass);
-  }, [selectedClass]);
+    return subjects.filter((s) => s.class_ref?.id === selectedClass);
+  }, [selectedClass, subjects]);
 
+  // proper duration parsing (HH:MM:SS)
   const parseDuration = (durationStr) => {
-    const parts = durationStr.split(':');
+    if (!durationStr) return 0;
+    const parts = durationStr.split(":").map(Number);
     if (parts.length === 3) {
-      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+      return parts[0] * 60 + parts[1];
     }
-    return parseInt(parts[0]);
+    if (parts.length === 2) {
+      return parts[0];
+    }
+    return 0;
   };
 
   const filteredVideos = useMemo(() => {
     let result = videos.filter((video) => {
       const matchesSearch = searchQuery === "" ||
         video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        video.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesSubject = selectedSubject === "all" || video.subjectId === selectedSubject;
-      const matchesType = selectedType === "all" || video.videoType === selectedType;
-      const subject = subjects.find((s) => s.id === video.subjectId);
-      const matchesClass = selectedClass === "all" || (subject && subject.classId === selectedClass);
+        video.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSubject = selectedSubject === "all" || video.subject?.id === selectedSubject;
+
+      const matchesType = selectedType === "all" || video.video_type === selectedType;
+
+      const matchesClass = selectedClass === "all" || video.subject?.class_ref?.id === selectedClass;
       
       let matchesDuration = true;
       if (selectedDuration !== "all") {
-        const durationFilter = DURATION_FILTERS.find(f => f.value === selectedDuration);
-        const videoMinutes = parseDuration(video.duration);
-        if (durationFilter) {
-          if (durationFilter.min !== undefined && durationFilter.max !== undefined) {
-            matchesDuration = videoMinutes >= durationFilter.min && videoMinutes < durationFilter.max;
-          } else if (durationFilter.max !== undefined) {
-            matchesDuration = videoMinutes < durationFilter.max;
-          } else if (durationFilter.min !== undefined) {
-            matchesDuration = videoMinutes >= durationFilter.min;
-          }
+        const filter = DURATION_FILTERS.find(f => f.value === selectedDuration);
+        const mins = parseDuration(video.duration);
+        if (filter?.min !== undefined && filter?.max !== undefined) {
+          matchesDuration = mins >= filter.min && mins < filter.max;
+        } else if (filter?.max !== undefined) {
+          matchesDuration = mins < filter.max;
+        } else if (filter?.min !== undefined) {
+          matchesDuration = mins >= filter.min;
         }
       }
 
-      let matchesWatchStatus = true;
       const progress = progressMap[video.id] || 0;
-      if (selectedWatchStatus === "unwatched") {
-        matchesWatchStatus = progress === 0;
-      } else if (selectedWatchStatus === "in-progress") {
-        matchesWatchStatus = progress > 0 && progress < 90;
-      } else if (selectedWatchStatus === "watched") {
-        matchesWatchStatus = progress >= 90;
-      }
+      let matchesWatchStatus = true;
+      if (selectedWatchStatus === "unwatched") matchesWatchStatus = progress === 0;
+      if (selectedWatchStatus === "in-progress") matchesWatchStatus = progress > 0 && progress < 90;
+      if (selectedWatchStatus === "watched") matchesWatchStatus = progress >= 90;
 
       return matchesSearch && matchesSubject && matchesType && matchesClass && matchesDuration && matchesWatchStatus;
     });
 
     result = [...result].sort((a, b) => {
       switch (sortBy) {
-        case "latest": return new Date(b.publishedAt) - new Date(a.publishedAt);
+        case "latest": return new Date(b.published_at) - new Date(a.published_at);
         case "popular": return b.views - a.views;
-        case "trending": return (b.isTrending ? 1 : 0) - (a.isTrending ? 1 : 0) || b.views - a.views;
+        case "trending": return (b.is_trending ? 1 : 0) - (a.is_trending ? 1 : 0);
         default: return 0;
       }
     });
 
     return result;
-  }, [searchQuery, selectedClass, selectedSubject, selectedType, selectedDuration, selectedWatchStatus, sortBy, progressMap]);
+  }, [videos, searchQuery, selectedClass, selectedSubject, selectedType, selectedDuration, selectedWatchStatus, sortBy, progressMap]);
 
-  const displayedVideos = useMemo(() => filteredVideos.slice(0, displayCount), [filteredVideos, displayCount]);
+
+  const displayedVideos = useMemo(
+    () => filteredVideos.slice(0, displayCount),
+    [filteredVideos, displayCount]
+  );
+
   const hasMore = displayCount < filteredVideos.length;
 
   useEffect(() => {
@@ -168,7 +192,7 @@ const VideosPage = () => {
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, isLoading, filteredVideos.length]);
 
-  const videoTypes = [...new Set(videos.map((v) => v.videoType))];
+  const videoTypes = [...new Set(videos.map(v => v.video_type))];
 
   const clearFilters = () => {
     setSelectedClass("all");
@@ -183,15 +207,15 @@ const VideosPage = () => {
   const hasActiveFilters = selectedClass !== "all" || selectedSubject !== "all" || selectedType !== "all" || selectedDuration !== "all" || selectedWatchStatus !== "all" || searchQuery !== "";
 
   const handleFavoriteClick = useCallback((video) => {
-    const chapter = chapters.find(c => c.id === video.chapterId);
+    const chapter = chapters.find(c => c.id === video.chapter?.id);
     toggleFavorite({
-      videoId: video.id,
+      id: video.id,          
       title: video.title,
       thumbnail: video.thumbnail,
       duration: video.duration,
-      chapterName: chapter?.name || video.chapterName,
+      chapterName: chapter?.name || "",
     });
-  }, [toggleFavorite]);
+  }, [toggleFavorite, chapters]);
 
   return (
     <MainLayout>
@@ -260,7 +284,7 @@ const VideosPage = () => {
               <>
                 <div className="videos-grid">
                   {displayedVideos.map((video, index) => {
-                    const chapter = chapters.find(c => c.id === video.chapterId);
+                    const chapter = chapters.find(c => c.id === video.chapter.id);
                     return (
                       <VideoCard
                         key={video.id}

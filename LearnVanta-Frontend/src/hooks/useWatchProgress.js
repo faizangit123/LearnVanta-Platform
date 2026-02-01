@@ -13,12 +13,23 @@ export const useWatchProgress = (videoId) => {
   const [isLoading, setIsLoading] = useState(true);
   const lastUpdateRef = useRef(0);
 
+  // 🔧 ADDED: normalize API vs mock shape
+  const normalizeProgress = (data = {}) => {
+    const currentTime = data.currentTime ?? data.current_time ?? 0;
+    const duration = data.duration ?? 0;
+    const percentage =
+      data.percentage ??
+      (duration > 0 ? Math.round((currentTime / duration) * 100) : 0);
+
+    return { currentTime, duration, percentage };
+  };
+
   const loadProgress = useCallback(async () => {
     if (!videoId) return;
     setIsLoading(true);
     try {
       const data = await videoService.getWatchProgress(videoId);
-      setProgress(data);
+      setProgress(normalizeProgress(data)); // 🔧 CHANGED
     } catch (error) {
       console.error('Failed to load watch progress:', error);
       setProgress({ currentTime: 0, duration: 0, percentage: 0 });
@@ -37,12 +48,12 @@ export const useWatchProgress = (videoId) => {
     if (!videoId) return;
     
     const now = Date.now();
-    if (now - lastUpdateRef.current < 5000) return; // Throttle to 5 seconds
+    if (now - lastUpdateRef.current < 5000) return;
     lastUpdateRef.current = now;
 
     try {
       const updated = await videoService.updateWatchProgress(videoId, currentTime, duration);
-      setProgress(updated);
+      setProgress(normalizeProgress(updated)); // 🔧 CHANGED
     } catch (error) {
       console.error('Failed to update watch progress:', error);
     }
@@ -53,7 +64,7 @@ export const useWatchProgress = (videoId) => {
     if (!videoId) return;
     try {
       const updated = await videoService.updateWatchProgress(videoId, currentTime, duration);
-      setProgress(updated);
+      setProgress(normalizeProgress(updated)); // 🔧 CHANGED
     } catch (error) {
       console.error('Failed to update watch progress:', error);
     }
