@@ -6,7 +6,7 @@
  * otherwise calls Django REST API.
  */
 
-import { API_CONFIG, apiRequest, mockDelay } from "../config/api.js";
+import { API_CONFIG, apiRequest, } from "../config/api.js";
 
 // Resource Types
 export const RESOURCE_TYPES = {
@@ -41,20 +41,20 @@ const RESOURCE_CONFIG = {
 // LOCAL STORAGE HELPERS
 // ============================================
 
-const getMockResources = () => {
-  try {
-    const stored = localStorage.getItem(RESOURCE_CONFIG.storageKey);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
+// const getMockResources = () => {
+//   try {
+//     const stored = localStorage.getItem(RESOURCE_CONFIG.storageKey);
+//     return stored ? JSON.parse(stored) : [];
+//   } catch {
+//     return [];
+//   }
+// };
 
-const saveMockResources = (resources) => {
-  localStorage.setItem(RESOURCE_CONFIG.storageKey, JSON.stringify(resources));
-};
+// const saveMockResources = (resources) => {
+//   localStorage.setItem(RESOURCE_CONFIG.storageKey, JSON.stringify(resources));
+// };
 
-const generateId = () => `res-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+// const generateId = () => `res-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 // ============================================
 // UPLOAD OPERATIONS
@@ -72,52 +72,51 @@ export const uploadResource = async (file, chapterId, resourceType, title = '') 
   if (!Object.values(RESOURCE_TYPES).includes(resourceType)) {
     throw new Error('Invalid resource type');
   }
-
-  if (!API_CONFIG.useMock) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('chapter_id', chapterId);
     formData.append('resource_type', resourceType);
     if (title) formData.append('title', title);
 
-    return apiRequest("/api/v1/resources/resources/upload/", {
-      method: 'POST',
-      body: formData,
-    });
-  }
+    return apiRequest("/resources/upload/", {
+    method: "POST",
+    body: formData,
+  });
 
-  // Mock
-  await mockDelay(500);
+  
 
-  const resource = {
-    id: generateId(),
-    chapterId,
-    type: resourceType,
-    title: title || RESOURCE_TYPE_LABELS[resourceType],
-    fileName: file.name,
-    size: formatFileSize(file.size),
-    sizeBytes: file.size,
-    mimeType: file.type,
-    uploadedAt: new Date().toISOString(),
-    downloadCount: 0,
-    url: null,
-    isMock: true
-  };
+  // // Mock
+  // await mockDelay(500);
 
-  const resources = getMockResources();
+  // const resource = {
+  //   id: generateId(),
+  //   chapterId,
+  //   type: resourceType,
+  //   title: title || RESOURCE_TYPE_LABELS[resourceType],
+  //   fileName: file.name,
+  //   size: formatFileSize(file.size),
+  //   sizeBytes: file.size,
+  //   mimeType: file.type,
+  //   uploadedAt: new Date().toISOString(),
+  //   downloadCount: 0,
+  //   url: null,
+  //   isMock: true
+  // };
 
-  const existingIndex = resources.findIndex(
-    r => r.chapterId === chapterId && r.type === resourceType
-  );
+  // const resources = getMockResources();
 
-  if (existingIndex >= 0) {
-    resources[existingIndex] = resource;
-  } else {
-    resources.push(resource);
-  }
+  // const existingIndex = resources.findIndex(
+  //   r => r.chapterId === chapterId && r.type === resourceType
+  // );
 
-  saveMockResources(resources);
-  return resource;
+  // if (existingIndex >= 0) {
+  //   resources[existingIndex] = resource;
+  // } else {
+  //   resources.push(resource);
+  // }
+
+  // saveMockResources(resources);
+  // return resource;
 };
 
 // ============================================
@@ -125,31 +124,30 @@ export const uploadResource = async (file, chapterId, resourceType, title = '') 
 // ============================================
 
 export const getResourcesByChapter = async (chapterId) => {
-  if (!API_CONFIG.useMock) {
-    const data = await apiRequest(`/api/v1/resources/chapters/${chapterId}/resources/`);
+    const data = await apiRequest(`/resources/chapter/${chapterId}/`);
     return {
       notes: data.find(r => r.type === RESOURCE_TYPES.NOTES) || null,
       practice: data.find(r => r.type === RESOURCE_TYPES.PRACTICE) || null,
       formulas: data.find(r => r.type === RESOURCE_TYPES.FORMULAS) || null
     };
-  }
 
-  const resources = getMockResources();
-  const chapterResources = resources.filter(r => r.chapterId === chapterId);
+    
+  // const resources = getMockResources();
+  // const chapterResources = resources.filter(r => r.chapterId === chapterId);
 
-  return {
-    notes: chapterResources.find(r => r.type === RESOURCE_TYPES.NOTES) || null,
-    practice: chapterResources.find(r => r.type === RESOURCE_TYPES.PRACTICE) || null,
-    formulas: chapterResources.find(r => r.type === RESOURCE_TYPES.FORMULAS) || null
-  };
+  // return {
+  //   notes: chapterResources.find(r => r.type === RESOURCE_TYPES.NOTES) || null,
+  //   practice: chapterResources.find(r => r.type === RESOURCE_TYPES.PRACTICE) || null,
+  //   formulas: chapterResources.find(r => r.type === RESOURCE_TYPES.FORMULAS) || null
+  // };
 };
 
 export const getAllResources = async () => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest("/api/v1/resources/resources/");
-  }
+  return apiRequest("/resources/");
+};
 
-  return getMockResources();
+export const getResourceById = async (resourceId) => {
+  return apiRequest(`/resources/${resourceId}/`);
 };
 
 // ============================================
@@ -157,40 +155,21 @@ export const getAllResources = async () => {
 // ============================================
 
 export const updateResource = async (resourceId, data) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest(`/api/v1/resources/resources/${resourceId}/`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  const resources = getMockResources();
-  const index = resources.findIndex(r => r.id === resourceId);
-
-  if (index === -1) {
-    throw new Error('Resource not found');
-  }
-
-  resources[index] = { ...resources[index], ...data, updatedAt: new Date().toISOString() };
-  saveMockResources(resources);
-  return resources[index];
+  return apiRequest(`/resources/resources/${resourceId}/`, {
+    method: 'PATCH',   // PATCH is better than PUT
+    body: JSON.stringify(data),
+  });
 };
+
 
 // ============================================
 // DELETE OPERATIONS
 // ============================================
 
 export const deleteResource = async (resourceId) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest(`/api/v1/resources/resources/${resourceId}/`, {
-      method: 'DELETE',
-    });
-  }
-
-  const resources = getMockResources();
-  const filtered = resources.filter(r => r.id !== resourceId);
-  saveMockResources(filtered);
-  return { success: true };
+  return apiRequest(`/resources/${resourceId}/`, {
+    method: "DELETE",
+  });
 };
 
 // ============================================
@@ -198,28 +177,8 @@ export const deleteResource = async (resourceId) => {
 // ============================================
 
 export const getDownloadUrl = async (resourceId) => {
-  if (!API_CONFIG.useMock) {
-    const response = await apiRequest(`/api/v1/resources/resources/${resourceId}/`);
-    return response.file;
-  }
-
-  return null;
-};
-
-export const trackDownload = async (resourceId) => {
-  if (!API_CONFIG.useMock) {
-    apiRequest(`/api/v1/resources/resources/${resourceId}/track-download/`, {
-      method: 'POST',
-    }).catch(() => {});
-    return;
-  }
-
-  const resources = getMockResources();
-  const index = resources.findIndex(r => r.id === resourceId);
-  if (index >= 0) {
-    resources[index].downloadCount = (resources[index].downloadCount || 0) + 1;
-    saveMockResources(resources);
-  }
+  const response = await getResourceById(resourceId);
+  return response.file;
 };
 
 // ============================================

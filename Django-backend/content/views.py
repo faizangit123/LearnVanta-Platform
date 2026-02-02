@@ -50,7 +50,7 @@ def videos_by_chapter(request, chapter_id):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def video_detail(request, video_id):
-    video = get_object_or_404(Video, id=video_id)
+    video = get_object_or_404(Video, id=video_id, is_active=True)  # 🔧 added is_active filter
     return Response(VideoSerializer(video).data)
 
 @api_view(['GET'])
@@ -74,8 +74,8 @@ def admin_videos_list(request):
 def create_video(request):
     serializer = VideoCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=201)
+    video = serializer.save()   # 🔧 capture instance
+    return Response(VideoSerializer(video).data, status=201)  # 🔧 return full serializer
 
 @api_view(['PATCH'])
 @permission_classes([IsAdminUser])
@@ -83,8 +83,8 @@ def update_video(request, video_id):
     video = get_object_or_404(Video, id=video_id)
     serializer = VideoCreateSerializer(video, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data)
+    video = serializer.save()
+    return Response(VideoSerializer(video).data)  # 🔧 return full serializer
 
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
@@ -96,7 +96,7 @@ def delete_video(request, video_id):
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def bulk_update_videos(request):
-    ids = request.data.get("ids", [])
+    ids = request.data.get("video_ids", [])   # 🔧 frontend sends video_ids, not ids
     updates = request.data.get("updates", {})
     Video.objects.filter(id__in=ids).update(**updates)
     return Response({"updatedCount": len(ids)})
@@ -104,7 +104,7 @@ def bulk_update_videos(request):
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def bulk_delete_videos(request):
-    ids = request.data.get("ids", [])
+    ids = request.data.get("video_ids", [])   # 🔧 same here
     deleted, _ = Video.objects.filter(id__in=ids).delete()
     return Response({"deletedCount": deleted})
 
@@ -123,8 +123,8 @@ def playlists_list(request):
 def create_playlist(request):
     serializer = PlaylistSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=201)
+    playlist = serializer.save()
+    return Response(PlaylistSerializer(playlist).data, status=201)  # 🔧 return normalized
 
 @api_view(['PATCH'])
 @permission_classes([IsAdminUser])
@@ -132,8 +132,8 @@ def update_playlist(request, playlist_id):
     playlist = get_object_or_404(Playlist, id=playlist_id)
     serializer = PlaylistSerializer(playlist, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data)
+    playlist = serializer.save()
+    return Response(PlaylistSerializer(playlist).data)  # 🔧 return normalized
 
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])

@@ -83,10 +83,10 @@ const VideosPage = () => {
 
   useEffect(() => {
     Promise.all([
-      apiRequest("/api/v1/content/videos/"),
-      apiRequest("/api/v1/content/classes/"),
-      apiRequest("/api/v1/content/subjects/"),
-      apiRequest("/api/v1/content/chapters/"),
+      apiRequest("/content/videos/"),
+      apiRequest("/content/classes/"),
+      apiRequest("/content/subjects/"),
+      apiRequest("/content/chapters/"),
     ]).then(([v, c, s, ch]) => {
       setVideos(v || []);
       setClasses(c || []);

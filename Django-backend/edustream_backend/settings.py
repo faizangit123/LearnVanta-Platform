@@ -84,6 +84,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+HANDLER404 = "project.urls.api_not_found"
+
 # --------------------------------------------------
 # URLs / WSGI
 # --------------------------------------------------

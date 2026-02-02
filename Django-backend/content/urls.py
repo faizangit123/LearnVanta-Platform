@@ -13,7 +13,14 @@ urlpatterns = [
     path("videos/<str:video_id>/", views.video_detail),
     path("videos/trending/", views.trending_videos),
 
-    # ---------- ADMIN ----------
-    path("admin/videos/", views.create_video),             # POST
-    path("admin/playlists/", views.playlists_list),        # GET
+    # ---------- ADMIN VIDEOS ----------
+    path("admin/videos/", views.admin_videos_list),      # 🔧 GET (admin list)
+    path("admin/videos/", views.create_video),           # POST (same URL, different method)
+
+    path("admin/videos/<str:video_id>/", views.update_video),   # PATCH
+    path("admin/videos/<str:video_id>/", views.delete_video),   # DELETE  (🔧 fixed)
+
+    # Bulk
+    path("videos/bulk-update/", views.bulk_update_videos),
+    path("videos/bulk-delete/", views.bulk_delete_videos),
 ]

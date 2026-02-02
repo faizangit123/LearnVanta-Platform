@@ -9,10 +9,11 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
+    name = serializers.CharField(source="first_name", read_only=True)  
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'email_verified', 'avatar', 'role','is_admin', 'created_at']
+        fields = ['id', 'email', 'username', 'first_name', 'name','last_name', 'email_verified', 'avatar', 'role','is_admin', 'created_at']
         read_only_fields = ['id', 'email_verified', 'created_at']
 
     def get_role(self, obj):

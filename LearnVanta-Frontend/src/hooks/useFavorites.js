@@ -7,12 +7,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import * as videoService from '../services/videoService';
+import { useAuth } from '../contexts/AuthContext'; //  ADDED: we need auth state to avoid calling API when logged out
 
 export const useFavorites = () => {
+  const { isAuthenticated } = useAuth();
   const [favorites, setFavorites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadFavorites = useCallback(async () => {
+    // ADDED: hard guard
+    if (!isAuthenticated) {
+      setFavorites([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const data = await videoService.getFavorites();
@@ -23,13 +31,14 @@ export const useFavorites = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     loadFavorites();
   }, [loadFavorites]);
 
   const addFavorite = useCallback(async (video) => {
+    if (!isAuthenticated) return false;
     try {
       const updated = await videoService.addToFavorites(video);
       setFavorites(updated || []);
@@ -38,9 +47,10 @@ export const useFavorites = () => {
       console.error('Failed to add to favorites:', error);
       return false;
     }
-  }, []);
+  }, [isAuthenticated]); 
 
-  const removeFavorite = useCallback(async (videoId) => {
+    const removeFavorite = useCallback(async (videoId) => {
+    if (!isAuthenticated) return false;
     try {
       const updated = await videoService.removeFromFavorites(videoId);
       setFavorites(updated || []);
@@ -49,18 +59,21 @@ export const useFavorites = () => {
       console.error('Failed to remove from favorites:', error);
       return false;
     }
-  }, []);
+  }, [isAuthenticated]);
 
-  const toggleFavorite = useCallback(async (video) => {
+   const toggleFavorite = useCallback(async (video) => {
+    if (!isAuthenticated) {
+      return { favorites: [], isFavorite: false }; 
+    }
     try {
       const result = await videoService.toggleFavorite(video);
       setFavorites(result.favorites || []);
-      return result;   //  return full object
+      return result.isFavorite;
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
-      return { favorites: [], isFavorite: false };
+      return null;
     }
-  }, []);
+  }, [isAuthenticated]); 
 
   // Django-compatible favorite check
   const checkIsFavorite = useCallback((videoId) => {

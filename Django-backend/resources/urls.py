@@ -4,10 +4,16 @@ from . import views
 urlpatterns = [
     # Public
     path("", views.resource_list),
+    
+    # Chapter resources (both supported)
     path("chapters/<str:chapter_id>/", views.resources_by_chapter),
-    path("<uuid:resource_id>/", views.resource_detail),
-    path("<uuid:resource_id>/track-download/", views.track_download),
+    path("chapters/<str:chapter_id>/resources/", views.resources_by_chapter),
 
-    # Admin
+    # Resource detail
+    path("<str:resource_id>/", views.resource_detail),
+    path("<str:resource_id>/track-download/", views.track_download),
+
+    # Admin upload (both supported)
+    path("upload/", views.resource_upload),
     path("admin/upload/", views.resource_upload),
 ]

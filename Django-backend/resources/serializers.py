@@ -4,18 +4,21 @@ from .models import Resource
 
 class ResourceSerializer(serializers.ModelSerializer):
     size = serializers.SerializerMethodField()
-    file_url = serializers.SerializerMethodField()  
+    file_url = serializers.SerializerMethodField()
+    file_name = serializers.SerializerMethodField()
+    chapter_id = serializers.CharField(source="chapter.id", read_only=True)  # 🔧 added
 
     class Meta:
         model = Resource
         fields = [
             'id',
-            'chapter',
+            'chapter',        # original (keep)
+            'chapter_id',     # 🔧 frontend-safe
             'type',
             'title',
-            'file_name',
-            'file_url',          
-            'size',              
+            'file_name',      # 🔧 fixed
+            'file_url',
+            'size',
             'mime_type',
             'download_count',
             'uploaded_at'
@@ -41,3 +44,6 @@ class ResourceSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.file.url)
             return obj.file.url
         return None
+
+    def get_file_name(self, obj):
+        return obj.file.name.split("/")[-1] if obj.file else None

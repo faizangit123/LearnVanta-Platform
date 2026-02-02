@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { API_CONFIG, API_ENDPOINTS, apiRequest } from "../config/api.js";
+import { useAuth } from "../contexts/AuthContext"; 
 
 const STORAGE_KEY = "edustream_video_notes";
 
@@ -28,7 +29,7 @@ const saveLocalNotes = (allNotes) => {
 };
 
 // ============================================
-// 🔧 ADDED: Normalizer (API vs UI shape)
+// NORMALIZER
 // ============================================
 
 const normalizeNote = (note) => ({
@@ -46,17 +47,23 @@ const normalizeNote = (note) => ({
 // ============================================
 
 export const useVideoNotes = (videoId) => {
+  const { isAuthenticated } = useAuth();
   const [notes, setNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load notes
   useEffect(() => {
     const loadNotes = async () => {
+      if (!isAuthenticated || !videoId) {
+        setNotes([]);
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         if (!API_CONFIG.useMock) {
           const data = await apiRequest(API_ENDPOINTS.notes.byVideo(videoId));
-          const normalized = (data || []).map(normalizeNote); // 🔧 CHANGED
+          const normalized = (data || []).map(normalizeNote);
           setNotes(normalized);
         } else {
           const allNotes = getLocalNotes();
@@ -70,10 +77,8 @@ export const useVideoNotes = (videoId) => {
       }
     };
 
-    if (videoId) {
-      loadNotes();
-    }
-  }, [videoId]);
+    loadNotes();
+  }, [videoId, isAuthenticated]); 
 
   // Save notes to localStorage (mock mode only)
   const saveToStorage = useCallback((videoId, updatedNotes) => {
@@ -86,6 +91,7 @@ export const useVideoNotes = (videoId) => {
 
   // Add a new note
   const addNote = useCallback(async (content, timestamp = null) => {
+    if (!isAuthenticated || !videoId) return null;
     if (!API_CONFIG.useMock) {
       const newNote = await apiRequest(API_ENDPOINTS.notes.create, {
         method: 'POST',
@@ -96,7 +102,7 @@ export const useVideoNotes = (videoId) => {
         }),
       });
 
-      const normalized = normalizeNote(newNote); // 🔧 ADDED
+      const normalized = normalizeNote(newNote);
       setNotes(prev => [...prev, normalized]);
       return normalized;
     }
@@ -111,15 +117,16 @@ export const useVideoNotes = (videoId) => {
       isPinned: false,
       isArchived: false,
     };
-
+    
     const updatedNotes = [...notes, newNote];
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
     return newNote;
-  }, [notes, videoId, saveToStorage]);
+  }, [notes, videoId, saveToStorage, isAuthenticated]);
 
   // Update an existing note
   const updateNote = useCallback(async (noteId, content) => {
+    if (!isAuthenticated || !videoId) return;
     if (!API_CONFIG.useMock) {
       await apiRequest(API_ENDPOINTS.notes.update(noteId), {
         method: 'PATCH',
@@ -134,10 +141,11 @@ export const useVideoNotes = (videoId) => {
     );
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
-  }, [notes, videoId, saveToStorage]);
+  }, [notes, videoId, saveToStorage, isAuthenticated]);
 
   // Delete a note
   const deleteNote = useCallback(async (noteId) => {
+    if (!isAuthenticated || !videoId) return;
     if (!API_CONFIG.useMock) {
       await apiRequest(API_ENDPOINTS.notes.delete(noteId), {
         method: 'DELETE',
@@ -147,10 +155,11 @@ export const useVideoNotes = (videoId) => {
     const updatedNotes = notes.filter((note) => note.id !== noteId);
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
-  }, [notes, videoId, saveToStorage]);
+  }, [notes, videoId, saveToStorage, isAuthenticated]);
 
   // Pin/unpin a note
   const togglePin = useCallback(async (noteId) => {
+    if (!isAuthenticated || !videoId) return;
     const note = notes.find(n => n.id === noteId);
     if (!note) return;
 
@@ -168,10 +177,11 @@ export const useVideoNotes = (videoId) => {
     );
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
-  }, [notes, videoId, saveToStorage]);
+  }, [notes, videoId, saveToStorage, isAuthenticated]);
 
   // Archive/unarchive a note
-  const toggleArchive = useCallback(async (noteId) => {
+    const toggleArchive = useCallback(async (noteId) => {
+    if (!isAuthenticated || !videoId) return;
     const note = notes.find(n => n.id === noteId);
     if (!note) return;
 
@@ -189,7 +199,7 @@ export const useVideoNotes = (videoId) => {
     );
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
-  }, [notes, videoId, saveToStorage]);
+  }, [notes, videoId, saveToStorage, isAuthenticated]);
 
   return {
     notes,
@@ -202,24 +212,41 @@ export const useVideoNotes = (videoId) => {
   };
 };
 
-// ============================================
+// ============================================ 
 // UTILITY FUNCTIONS
 // ============================================
-
+/**
+ * Get all notes across all videos
+ */
 export const getAllNotes = async () => {
+  const token = localStorage.getItem("token"); 
+
+
+  if (!token) return []; 
+
+
   if (!API_CONFIG.useMock) {
     return apiRequest(API_ENDPOINTS.notes.list);
   }
+
   return getLocalNotes();
 };
 
+/**
+ * Save all notes (used for bulk operations)
+ */
 export const saveAllNotes = (allNotes) => {
   if (API_CONFIG.useMock) {
     saveLocalNotes(allNotes);
   }
 };
 
+/**
+ * Get notes count for a specific video
+ */
 export const getNotesCount = (videoId) => {
+  if (!videoId) return 0; 
+
   try {
     const allNotes = getLocalNotes();
     return (allNotes[videoId] || []).length;
@@ -228,7 +255,16 @@ export const getNotesCount = (videoId) => {
   }
 };
 
+/**
+ * Delete all notes for a specific video
+ */
 export const clearVideoNotes = async (videoId) => {
+  const token = localStorage.getItem("token"); 
+
+
+  if (!token || !videoId) return; 
+
+
   if (!API_CONFIG.useMock) {
     const notes = await apiRequest(API_ENDPOINTS.notes.byVideo(videoId));
     await Promise.all(
@@ -243,5 +279,6 @@ export const clearVideoNotes = async (videoId) => {
   delete allNotes[videoId];
   saveLocalNotes(allNotes);
 };
+
 
 export default useVideoNotes;

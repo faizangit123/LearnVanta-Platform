@@ -13,11 +13,11 @@ import { logActivity, ACTIVITY_TYPES } from "./activityLogService.js";
 // ============================================
 
 export const getAllVideos = async () => {
-  return apiRequest("/api/v1/content/videos/");
+  return apiRequest("/content/videos/");
 };
 
 export const getVideoById = async (videoId) => {
-  return apiRequest(`/api/v1/content/videos/${videoId}/`);
+  return apiRequest(`/content/videos/${videoId}/`);
 };
 
 export const searchVideos = async (query) => {
@@ -38,7 +38,7 @@ export const createVideo = async (videoData) => {
     throw new Error("Chapter is required");
   }
 
-  const response = await apiRequest("/api/v1/content/admin/videos/", {
+  const response = await apiRequest("/content/admin/videos/", {
     method: "POST",
     body: JSON.stringify({
       title: videoData.title.trim(),
@@ -72,7 +72,7 @@ export const updateVideo = async (videoId, videoData) => {
   }
 
   const response = await apiRequest(
-    `/api/v1/content/admin/videos/${videoId}/`,
+    `/content/admin/videos/${videoId}/`,
     {
       method: "PATCH",
       body: JSON.stringify({
@@ -100,7 +100,7 @@ export const updateVideo = async (videoId, videoData) => {
 };
 
 export const bulkUpdateVideos = async (videoIds, updates) => {
-  return apiRequest("/api/v1/content/videos/bulk-update/", {
+  return apiRequest("/content/videos/bulk-update/", {
     method: "POST",
     body: JSON.stringify({
       video_ids: videoIds,
@@ -118,9 +118,9 @@ export const bulkUpdateVideos = async (videoIds, updates) => {
 export const deleteVideo = async (videoId) => {
   const video = await getVideoById(videoId);
 
-  await apiRequest(`/api/v1/content/admin/videos/${videoId}/`, {
-    method: "DELETE",
-  });
+  await apiRequest(`/content/admin/videos/${videoId}/delete/`, {
+  method: "DELETE",
+});
 
   if (video) {
     logActivity(ACTIVITY_TYPES.VIDEO_DELETED, {
@@ -134,7 +134,7 @@ export const deleteVideo = async (videoId) => {
 };
 
 export const bulkDeleteVideos = async (videoIds) => {
-  return apiRequest("/api/v1/content/videos/bulk-delete/", {
+  return apiRequest("/content/videos/bulk-delete/", {
     method: "POST",
     body: JSON.stringify({ video_ids: videoIds }),
   });

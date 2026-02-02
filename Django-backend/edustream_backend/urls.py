@@ -31,3 +31,10 @@ if settings.DEBUG:
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
     )
+    
+def api_not_found(request, exception=None):
+    return JsonResponse(
+        {"error": "API endpoint not found"},
+        status=404
+    )
+    

@@ -66,16 +66,16 @@ const saveLocalLogs = (logs) => {
 
 export const getActivityLogs = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest("/api/v1/activities/activities/");
+    // backend already limits to 100
+    return apiRequest("/activities/");
   }
-
   return getLocalLogs();
 };
 
 export const logActivity = (type, details = {}) => {
   if (!API_CONFIG.useMock) {
-    apiRequest("/api/v1/activities/activities/create/", {
-      method: 'POST',
+    apiRequest("/activities/create/", {
+      method: "POST",
       body: JSON.stringify({ type, details }),
     }).catch(() => {});
     return;
@@ -97,36 +97,27 @@ export const logActivity = (type, details = {}) => {
 };
 
 export const getRecentActivities = async (limit = 20) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest(`/api/v1/activities/activities/?limit=${limit}`);
-  }
-
-  const logs = getLocalLogs();
+  const logs = await getActivityLogs();
   return logs.slice(0, limit);
 };
 
 export const getActivitiesByType = async (type, limit = 20) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest(`/api/v1/activities/activities/?type=${type}&limit=${limit}`);
-  }
-
-  const logs = getLocalLogs();
+  const logs = await getActivityLogs();
   return logs.filter(log => log.type === type).slice(0, limit);
 };
 
 export const getUserActivities = async (userId, limit = 20) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest(`/api/v1/activities/activities/?user_id=${userId}&limit=${limit}`);
-  }
-
-  const logs = getLocalLogs();
-  return logs.filter(log => log.details.userId === userId).slice(0, limit);
+  const logs = await getActivityLogs();
+  return logs
+    .filter(log => log.details?.user_id === userId)
+    .slice(0, limit);
 };
+
 
 export const clearActivityLogs = async () => {
   if (!API_CONFIG.useMock) {
-    return apiRequest("/api/v1/activities/activities/clear/", {
-      method: 'POST',
+    return apiRequest("/activities/clear/", {
+      method: "DELETE",   
     });
   }
 
@@ -135,12 +126,7 @@ export const clearActivityLogs = async () => {
 };
 
 export const getActivityStats = async () => {
-  if (!API_CONFIG.useMock) {
-    // backend does not have stats endpoint
-    return apiRequest("/api/v1/activities/activities/");
-  }
-
-  const logs = getLocalLogs();
+  const logs = await getActivityLogs();
   const now = new Date();
   const last24h = new Date(now - 24 * 60 * 60 * 1000);
   const last7d = new Date(now - 7 * 24 * 60 * 60 * 1000);

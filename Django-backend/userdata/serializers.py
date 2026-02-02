@@ -17,35 +17,37 @@ class UserSerializer(serializers.ModelSerializer):
             "is_superuser",
         ]
 class WatchHistorySerializer(serializers.ModelSerializer):
-    video_id = serializers.CharField(source='video.id')
-    title = serializers.CharField(source='video.title')
-    thumbnail = serializers.CharField(source='video.thumbnail')
-    duration = serializers.CharField(source='video.duration')
-    chapter_name = serializers.CharField(source='video.chapter.name')
-    progress = serializers.IntegerField(source='progress_percentage')
+    video_id = serializers.CharField(source='video.id', read_only=True)
+    title = serializers.CharField(source='video.title', read_only=True)
+    thumbnail = serializers.CharField(source='video.thumbnail', read_only=True)
+    duration = serializers.CharField(source='video.duration', read_only=True)
+    chapter_name = serializers.CharField(source='video.chapter.name', read_only=True)
+    progress = serializers.IntegerField(source='progress_percentage', read_only=True)
 
     class Meta:
         model = WatchHistory
         fields = ['video_id', 'title', 'thumbnail', 'duration', 'chapter_name', 'progress', 'watched_at']
-
+        read_only_fields = fields
 
 class WatchProgressSerializer(serializers.ModelSerializer):
+    currentTime = serializers.IntegerField(source="current_time")
+
     class Meta:
         model = WatchProgress
-        fields = ['current_time', 'duration', 'percentage', 'updated_at']
-
+        fields = ['currentTime', 'duration', 'percentage', 'updated_at']
+        read_only_fields = fields
 
 class FavoriteSerializer(serializers.ModelSerializer):
-    video_id = serializers.CharField(source='video.id')
-    title = serializers.CharField(source='video.title')
-    thumbnail = serializers.CharField(source='video.thumbnail')
-    duration = serializers.CharField(source='video.duration')
-    chapter_name = serializers.CharField(source='video.chapter.name')
+    video_id = serializers.CharField(source='video.id', read_only=True)
+    title = serializers.CharField(source='video.title', read_only=True)
+    thumbnail = serializers.CharField(source='video.thumbnail', read_only=True)
+    duration = serializers.CharField(source='video.duration', read_only=True)
+    chapter_name = serializers.CharField(source='video.chapter.name', read_only=True)
 
     class Meta:
         model = Favorite
         fields = ['video_id', 'title', 'thumbnail', 'duration', 'chapter_name', 'added_at']
-
+        read_only_fields = fields
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,9 +60,9 @@ class UserPlaylistSerializer(serializers.ModelSerializer):
     video_count = serializers.SerializerMethodField()
 
     class Meta:
-        model = UserPlaylist
-        fields = ['id', 'name', 'description', 'video_count', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        model = UserPlaylistVideo
+        fields = ['playlist', 'video', 'order', 'added_at']
+        read_only_fields = ['added_at']
 
     def get_video_count(self, obj):
         return obj.playlist_videos.count()

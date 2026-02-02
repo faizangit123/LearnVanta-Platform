@@ -83,8 +83,8 @@ class VideoCreateSerializer(serializers.ModelSerializer):
 class PlaylistSerializer(serializers.ModelSerializer):
     videoIds = serializers.SerializerMethodField()
     isPublic = serializers.BooleanField(source='is_public')
-    createdAt = serializers.DateTimeField(source='created_at')
-    updatedAt = serializers.DateTimeField(source='updated_at')
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
+    updatedAt = serializers.DateTimeField(source='updated_at', read_only=True)
 
     class Meta:
         model = Playlist
@@ -100,4 +100,7 @@ class PlaylistSerializer(serializers.ModelSerializer):
         ]
 
     def get_videoIds(self, obj):
-        return list(obj.playlist_videos.values_list('video_id', flat=True))
+        # 🔧 FIX: force list of strings (React expects strings, not UUID objects)
+        return list(
+            obj.playlist_videos.values_list('video_id', flat=True)
+        )

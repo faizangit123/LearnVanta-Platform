@@ -30,34 +30,38 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  //  Validate token on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const token = getAuthToken();
+  
+// Validate token on mount
+useEffect(() => {
+  const initAuth = async () => {
+    try {
+      const token = getAuthToken();
 
-        if (!token) {
-          setUser(null);
-          return;
-        }
-
-        // USE CENTRAL API LAYER 
-        const userData = await apiRequest("/auth/profile/");
-
-        setUser(userData);
-        localStorage.setItem("edustream_user", JSON.stringify(userData));
-      } catch (e) {
-        console.error("Auth init error:", e);
+      if (!token) {
         setUser(null);
-        clearAllTokens();
-        localStorage.removeItem("edustream_user");
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
 
-    initAuth();
-  }, []);
+      const userData = await apiRequest("/auth/profile/");
+
+      
+      userData.isAdmin = userData.is_admin; 
+
+      setUser(userData);
+      localStorage.setItem("edustream_user", JSON.stringify(userData));
+    } catch (e) {
+      console.error("Auth init error:", e);
+      setUser(null);
+      clearAllTokens();
+      localStorage.removeItem("edustream_user");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  initAuth();
+}, []);
+
 
   // Login
   const login = useCallback(async (email, password) => {

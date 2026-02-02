@@ -25,9 +25,9 @@ def login_view(request):
     serializer.is_valid(raise_exception=True)
     
     user = authenticate(
-        email=serializer.validated_data['email'],
+        username=serializer.validated_data['email'], 
         password=serializer.validated_data['password']
-    )
+        )
     
     if not user:
         return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -36,23 +36,21 @@ def login_view(request):
         return Response(
             {'detail': 'Please verify your email before signing in.'},
             status=status.HTTP_401_UNAUTHORIZED
-        )
+            )
     
     token, _ = Token.objects.get_or_create(user=user)
     
     ActivityLog.objects.create(
         type=ActivityLog.ActivityType.USER_LOGIN,
         details={'user_id': str(user.id), 'user_email': user.email}
-    )
+        )
     
     
     return Response({
-        'token': token.key,
-        'user': {
-            **UserSerializer(user).data,
-            "is_admin": user.is_staff or user.is_superuser
-        }
+    "token": token.key,
+    "user": UserSerializer(user).data
     })
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -269,7 +267,5 @@ class ProfileView(generics.RetrieveUpdateAPIView):
             details={'user_id': str(request.user.id), 'user_email': request.user.email}
         )
         
-        return Response({
-            **UserSerializer(request.user).data,
-            "is_admin": request.user.is_staff or request.user.is_superuser
-        })
+        return Response(UserSerializer(request.user).data)
+
