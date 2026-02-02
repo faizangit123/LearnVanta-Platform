@@ -142,7 +142,7 @@ useEffect(() => {
   // // Related videos (excludes playlist videos if in playlist)
   // const relatedVideos = video ? getRelatedVideos(video, 5) : [];
   
-  // // Chapter videos (fallback if no related)
+  // Chapter videos (fallback if no related)
   // const chapterVideos = chapter 
   //   ? getVideosByChapter(chapter.id).filter(v => v.id !== videoId).slice(0, 4)
   //   : [];

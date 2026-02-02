@@ -4,7 +4,7 @@ from .models import Resource
 
 class ResourceSerializer(serializers.ModelSerializer):
     size = serializers.SerializerMethodField()
-    file_url = serializers.SerializerMethodField()  # ADDED
+    file_url = serializers.SerializerMethodField()  
 
     class Meta:
         model = Resource
@@ -14,8 +14,8 @@ class ResourceSerializer(serializers.ModelSerializer):
             'type',
             'title',
             'file_name',
-            'file_url',          # ADDED
-            'size',              # formatted
+            'file_url',          
+            'size',              
             'mime_type',
             'download_count',
             'uploaded_at'
@@ -23,7 +23,6 @@ class ResourceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uploaded_at', 'download_count']
 
     def get_size(self, obj):
-        # unchanged
         if obj.file_size == 0:
             return '0 Bytes'
         sizes = ['Bytes', 'KB', 'MB', 'GB']
@@ -36,7 +35,6 @@ class ResourceSerializer(serializers.ModelSerializer):
         return f"{size:.1f} {sizes[i]}"
 
     def get_file_url(self, obj):
-        # ADDED - real download link
         request = self.context.get('request')
         if obj.file:
             if request:

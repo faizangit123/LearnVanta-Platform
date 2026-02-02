@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🔐 Validate token on mount
+  //  Validate token on mount
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // USE CENTRAL API LAYER (IMPORTANT)
+        // USE CENTRAL API LAYER 
         const userData = await apiRequest("/auth/profile/");
 
         setUser(userData);
@@ -107,7 +107,7 @@ export const AuthProvider = ({ children }) => {
     updateUser,
   };
 
-  // 🛑 THIS PREVENTS WHITE SCREENS
+  // THIS PREVENTS WHITE SCREENS
   if (isLoading) return null;
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -18,7 +18,7 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
 
   // =========================
-  // AUTH (CORRECT)
+  // AUTH 
   // =========================
   auth: {
     login: '/auth/login/',
@@ -50,7 +50,7 @@ export const API_ENDPOINTS = {
   },
 
   // =========================
-  // VIDEOS (FIXED)
+  // VIDEOS 
   // =========================
   videos: {
     list: '/content/videos/',
@@ -84,7 +84,7 @@ export const API_ENDPOINTS = {
   },
 
   // =========================
-  // RESOURCES (FIXED)
+  // RESOURCES 
   // =========================
   resources: {
     list: '/resources/resources/',
@@ -95,7 +95,7 @@ export const API_ENDPOINTS = {
   },
 
   // =========================
-  // ACTIVITIES (FIXED)
+  // ACTIVITIES 
   // =========================
   activities: {
     list: '/activities/activities/',

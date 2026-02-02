@@ -8,8 +8,7 @@ from .serializers import ActivityLogSerializer
 
 #  Centralized admin check
 def require_admin(user):
-    return user.is_authenticated and user.is_admin
-
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

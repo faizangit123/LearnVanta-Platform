@@ -10,7 +10,7 @@ class ActivityLogSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'type',
-            'type_label',   # human readable
+            'type_label',   
             'details',
             'timestamp'
         ]
