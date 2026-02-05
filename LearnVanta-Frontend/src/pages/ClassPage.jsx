@@ -1,7 +1,8 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { MainLayout } from "../components/layout";
-import { getClassById, getSubjectsByClass } from "../data/mockData";
+import { useEffect, useState } from "react";
+import { apiRequest } from "../config/api";
 
 // Icons
 const BookIcon = () => (
@@ -252,8 +253,24 @@ const getColorGradient = (color) => {
 
 const ClassPage = () => {
   const { classId } = useParams();
-  const classData = getClassById(classId);
-  const allSubjects = getSubjectsByClass(classId);
+  const [classData, setClassData] = useState(null);
+  const [allSubjects, setAllSubjects] = useState([]);
+
+  useEffect(() => {
+  Promise.all([
+    apiRequest(`/content/classes/${classId}/`),
+    apiRequest(`/content/subjects/${classId}/`)
+  ])
+    .then(([classRes, subjectsRes]) => {
+      setClassData(classRes);
+      setAllSubjects(subjectsRes || []);
+    })
+    .catch(() => {
+      setClassData(null);
+      setAllSubjects([]);
+    });
+}, [classId]);
+
 
   // Separate primary (Maths) and secondary subjects
   const primarySubjects = allSubjects.filter((s) => s.isPrimary);

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useAuthPrompt } from "../context/AuthPromptContext.jsx";
 import { MainLayout } from "./layout/index.js";
@@ -42,7 +42,8 @@ const ProtectedRoute = ({
     if (!isLoading && requireAuth && !isAuthenticated) {
       showLoginPrompt(getFeatureFromPath());
     }
-  }, [isLoading, requireAuth, isAuthenticated, showLoginPrompt, location.pathname]);
+  }, [isLoading, requireAuth, isAuthenticated, showLoginPrompt, location.pathname, feature]);
+
 
   // Show loading state
   if (isLoading) {
@@ -143,7 +144,7 @@ const ProtectedRoute = ({
           <h1>Access Denied</h1>
           <p>You don't have permission to access this page.</p>
           <p className="access-denied-hint">This area is restricted to administrators only.</p>
-          <a href="/" className="btn btn-primary">Go to Home</a>
+          <Link to="/" className="btn btn-primary">Go to Home</Link>
         </div>
         <style>{`
           .access-denied {

@@ -1,24 +1,25 @@
 /**
  * Watch History Hook
  * 
- * Manages video watch history with localStorage (mock mode)
- * or Django API calls (real mode).
+ * Manages video watch history using Django API.
+ * (Mock mode is effectively disabled in production)
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import * as videoService from '../services/videoService';
-import { useAuth } from '../contexts/AuthContext'; 
-
+import { useState, useEffect, useCallback } from "react";
+import * as videoService from "../services/videoService";
+import { useAuth } from "../context/AuthContext.jsx"; // ✅ CORRECT PATH
 
 export const useWatchHistory = () => {
-  const { isAuthenticated } = useAuth(); 
-
+  const { isAuthenticated } = useAuth();   // auth guard
 
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ============================================
+  // LOAD HISTORY
+  // ============================================
   const loadHistory = useCallback(async () => {
-    // ADDED: prevent 401 spam
+    // HARD GUARD: never call backend if logged out
     if (!isAuthenticated) {
       setHistory([]);
       setIsLoading(false);
@@ -30,60 +31,70 @@ export const useWatchHistory = () => {
       const data = await videoService.getWatchHistory();
       setHistory(data || []);
     } catch (error) {
-      console.error('Failed to load watch history:', error);
+      console.error("Failed to load watch history:", error);
       setHistory([]);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]); 
+  }, [isAuthenticated]);
 
-
+  // Load on mount & when auth changes
   useEffect(() => {
     loadHistory();
   }, [loadHistory]);
 
+  // ============================================
+  // ADD TO HISTORY
+  // ============================================
   const addToHistory = useCallback(async (video) => {
-    if (!isAuthenticated) return; 
+    if (!isAuthenticated || !video?.id) return;
 
     try {
       const updated = await videoService.addToWatchHistory(video);
       setHistory(updated || []);
     } catch (error) {
-      console.error('Failed to add to watch history:', error);
+      console.error("Failed to add to watch history:", error);
     }
-  }, [isAuthenticated]); 
+  }, [isAuthenticated]);
 
-
+  // ============================================
+  // REMOVE FROM HISTORY
+  // ============================================
   const removeFromHistory = useCallback(async (videoId) => {
-    if (!isAuthenticated) return; 
+    if (!isAuthenticated || !videoId) return;
 
     try {
       const updated = await videoService.removeFromWatchHistory(videoId);
       setHistory(updated || []);
     } catch (error) {
-      console.error('Failed to remove from watch history:', error);
+      console.error("Failed to remove from watch history:", error);
     }
-  }, [isAuthenticated]); 
+  }, [isAuthenticated]);
 
-
+  // ============================================
+  // CLEAR HISTORY
+  // ============================================
   const clearHistory = useCallback(async () => {
-    if (!isAuthenticated) return; 
+    if (!isAuthenticated) return;
 
     try {
       await videoService.clearWatchHistory();
       setHistory([]);
     } catch (error) {
-      console.error('Failed to clear watch history:', error);
+      console.error("Failed to clear watch history:", error);
     }
-  }, [isAuthenticated]); 
+  }, [isAuthenticated]);
 
+  // ============================================
+  // PUBLIC API
+  // ============================================
   return {
     history,
     isLoading,
     addToHistory,
     removeFromHistory,
     clearHistory,
-    refresh: loadHistory
+    refresh: loadHistory,
   };
 };
 

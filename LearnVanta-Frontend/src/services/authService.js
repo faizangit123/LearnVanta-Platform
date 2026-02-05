@@ -2,19 +2,17 @@
  * Authentication Service
  * 
  * Handles all authentication operations.
- * Uses mock localStorage when API_CONFIG.useMock is true,
- * otherwise calls Django REST API.
+ * Calls Django REST API only (NO MOCK).
  */
 
 import {
-  API_CONFIG,
   apiRequest,
-  mockDelay,
   setAuthToken,
   setRefreshToken,
   clearAllTokens,
   getAuthToken
 } from "../config/api.js";
+
 import {
   logActivity,
   ACTIVITY_TYPES
@@ -22,9 +20,8 @@ import {
 
 
 /* ===============================
-    Normalizer
-   ===============================
-    */
+   Normalizer
+   =============================== */
 const normalizeUser = (user) => {
   if (!user) return null;
 
@@ -36,15 +33,6 @@ const normalizeUser = (user) => {
 };
 
 // ============================================
-// MOCK DATA
-// ============================================
-
-const getMockUsers = () => {
-  const registered = JSON.parse(localStorage.getItem("edustream_registered_users") || "[]");
-  return registered;
-};
-
-// ============================================
 // LOGIN
 // ============================================
 
@@ -53,52 +41,32 @@ export const loginUser = async (email, password) => {
     throw new Error("Email and password are required");
   }
 
-  if (!API_CONFIG.useMock) {
-    const response = await apiRequest("/auth/login/", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password
-      }),
-    });
+  const response = await apiRequest("/auth/login/", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
 
-    // Django returns token or access/refresh
-    if (response.token) {
-      setAuthToken(response.token);
-    }
-    if (response.access) {
-      setAuthToken(response.access);
-      setRefreshToken(response.refresh);
-    }
-
-    const user = normalizeUser(response.user);
-
-    logActivity(ACTIVITY_TYPES.USER_LOGIN, {
-      userId: user.id,
-      userName: user.name,
-      userEmail: user.email,
-    });
-
-    return user;
+  // Token handling (DRF token or JWT)
+  if (response.token) {
+    setAuthToken(response.token);
+    localStorage.setItem("token", response.token);
   }
 
-  // MOCK
-  await mockDelay(800);
+  if (response.access) {
+    setAuthToken(response.access);
+    setRefreshToken(response.refresh);
+    localStorage.setItem("token", response.access);
+  }
 
-  const registeredUsers = getMockUsers();
-  const user = registeredUsers.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase()
-  );
+  const user = normalizeUser(response.user);
 
-  if (!user) throw new Error("User not found");
-  if (user.password !== password) throw new Error("Invalid credentials");
-  if (user.emailVerified === false) throw new Error("Please verify your email");
+  logActivity(ACTIVITY_TYPES.USER_LOGIN, {
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+  });
 
-  const {
-    password: _,
-    ...safeUser
-  } = user;
-  return safeUser;
+  return user;
 };
 
 // ============================================
@@ -110,51 +78,13 @@ export const registerUser = async (name, email, password) => {
     throw new Error("All fields are required");
   }
 
-  if (!API_CONFIG.useMock) {
-    const response = await apiRequest("/auth/register/", {
-      method: "POST",
-      body: JSON.stringify({
-        name,
-        email,
-        password
-      }),
-    });
+  const response = await apiRequest("/auth/register/", {
+    method: "POST",
+    body: JSON.stringify({ name, email, password }),
+  });
 
-    return {
-      ...normalizeUser(response.user),
-      verificationPending: true
-    };
-  }
-
-  // MOCK (unchanged)
-  await mockDelay(1000);
-
-  const registeredUsers = getMockUsers();
-  const existingUser = registeredUsers.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase()
-  );
-
-  if (existingUser) throw new Error("Email already registered");
-
-  const newUser = {
-    id: "user_" + Date.now(),
-    email,
-    password,
-    name,
-    role: "user",
-    emailVerified: false,
-    createdAt: new Date().toISOString(),
-  };
-
-  registeredUsers.push(newUser);
-  localStorage.setItem("edustream_registered_users", JSON.stringify(registeredUsers));
-
-  const {
-    password: _,
-    ...safeUser
-  } = newUser;
   return {
-    ...safeUser,
+    ...normalizeUser(response.user),
     verificationPending: true
   };
 };
@@ -164,35 +94,17 @@ export const registerUser = async (name, email, password) => {
 // ============================================
 
 export const verifyEmail = async (token) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest("/auth/verify-email/", {
-      method: "POST",
-      body: JSON.stringify({
-        token
-      }),
-    });
-  }
-
-  await mockDelay(800);
-  return {
-    success: true
-  };
+  return apiRequest("/auth/verify-email/", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
 };
 
 export const resendVerificationEmail = async (email) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest("/auth/resend-verification/", {
-      method: "POST",
-      body: JSON.stringify({
-        email
-      }),
-    });
-  }
-
-  await mockDelay(800);
-  return {
-    success: true
-  };
+  return apiRequest("/auth/resend-verification/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 };
 
 // ============================================
@@ -200,26 +112,11 @@ export const resendVerificationEmail = async (email) => {
 // ============================================
 
 export const requestPasswordReset = async (email) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest("/auth/password-reset/", {
-      method: "POST",
-      body: JSON.stringify({
-        email
-      }),
-    });
-  }
-
-  await mockDelay(1000);
-  return {
-    success: true
-  };
+  return apiRequest("/auth/password-reset/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 };
-
-
-export const validateResetToken = async () => {
-  return { valid: true }; 
-};
-
 
 export const resetPassword = async (token, newPassword) => {
   return apiRequest("/auth/password-reset/confirm/", {
@@ -232,20 +129,13 @@ export const resetPassword = async (token, newPassword) => {
 // PROFILE
 // ============================================
 
-export const updateUserProfile = async (userId, updates) => {
-  if (!API_CONFIG.useMock) {
-    const response = await apiRequest("/auth/profile/", {
-      method: "PATCH",
-      body: JSON.stringify(updates),
-    });
+export const updateUserProfile = async (updates) => {
+  const response = await apiRequest("/auth/profile/", {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
 
-    return normalizeUser(response);   
-
-  }
-
-
-  await mockDelay(500);
-  return updates;
+  return normalizeUser(response);
 };
 
 // ============================================
@@ -253,14 +143,9 @@ export const updateUserProfile = async (userId, updates) => {
 // ============================================
 
 export const getUserRole = async () => {
-  if (!API_CONFIG.useMock) {
-    const profile = await apiRequest("/auth/profile/");
-    const user = normalizeUser(profile);   
-    return user.isAdmin ? "admin" : "user";
-  }
-
-  await mockDelay(100);
-  return "user";
+  const profile = await apiRequest("/auth/profile/");
+  const user = normalizeUser(profile);
+  return user.isAdmin ? "admin" : "user";
 };
 
 export const isAdmin = (user) => {
@@ -272,72 +157,28 @@ export const isAdmin = (user) => {
 // ============================================
 
 export const validateSession = async () => {
-  if (!API_CONFIG.useMock) {
-    try {
-      const token = getAuthToken();
-      if (!token) return false;
+  try {
+    const token = getAuthToken();
+    if (!token) return false;
 
-      await apiRequest("/auth/profile/");
-      return true;
-    } catch {
-      return false;
-    }
+    await apiRequest("/auth/profile/");
+    return true;
+  } catch {
+    return false;
   }
-
-  await mockDelay(100);
-  return false;
 };
 
 // ============================================
-// ADMIN USERS
+// ADMIN USERS (not implemented in backend)
 // ============================================
-
-// export const getAllUsers = async () => {
-//   if (!API_CONFIG.useMock) {
-//     return apiRequest("/auth/admin/users/");
-//   }
-
-//   await mockDelay(300);
-//   return getMockUsers();
-// };
 
 export const getAllUsers = async () => {
   throw new Error("Admin users API not implemented on backend");
 };
 
-
-// export const updateUserRole = async (userId, newRole) => {
-//   if (!API_CONFIG.useMock) {
-//     return apiRequest(`/auth/admin/users/${userId}/role/`, {
-//       method: "PATCH",
-//       body: JSON.stringify({
-//         role: newRole
-//       }),
-//     });
-//   }
-
-//   await mockDelay(500);
-//   return {
-//     success: true
-//   };
-// };
-
 export const updateUserRole = async () => {
   throw new Error("Admin users API not implemented on backend");
 };
-
-// export const deleteUser = async (userId) => {
-//   if (!API_CONFIG.useMock) {
-//     return apiRequest(`/auth/admin/users/${userId}/`, {
-//       method: "DELETE",
-//     });
-//   }
-
-//   await mockDelay(500);
-//   return {
-//     success: true
-//   };
-// };
 
 export const deleteUser = async () => {
   throw new Error("Admin users API not implemented on backend");
@@ -348,16 +189,13 @@ export const deleteUser = async () => {
 // ============================================
 
 export const logoutUser = async () => {
-  if (!API_CONFIG.useMock) {
-    try {
-      await apiRequest("/auth/logout/", {
-        method: "POST",
-      });
-    } catch {}
-  }
+  try {
+    await apiRequest("/auth/logout/", {
+      method: "POST",
+    });
+  } catch {}
 
   clearAllTokens();
-  return {
-    success: true
-  };
+  localStorage.removeItem("token");
+  return { success: true };
 };

@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MainLayout } from "../components/layout";
-import {
-  classes,
-  subjects,
-  searchVideos,
-  searchSubjects,
-  searchChapters,
-  getVideoTypes,
-  formatViews,
-} from "../data/mockData.js";
+import { apiRequest } from "../config/api";
+
 
 // Icons
 const SearchIcon = () => (
@@ -54,6 +47,13 @@ const ChapterIcon = () => (
   </svg>
 );
 
+// helper
+const formatViews = (num) => {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+};
+
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -65,32 +65,71 @@ const SearchPage = () => {
   const [selectedSubject, setSelectedSubject] = useState(searchParams.get("subject") || "");
   const [selectedVideoType, setSelectedVideoType] = useState(searchParams.get("type") || "");
 
-  const videoTypes = getVideoTypes();
+  // REAL DATA FROM BACKEND
+  const [videos, setVideos] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  
+  // LOAD DATA
+  useEffect(() => {
+    Promise.all([
+      apiRequest("/content/videos/"),
+      apiRequest("/content/subjects/"),
+      apiRequest("/content/classes/"),
+      apiRequest("/content/chapters/"),
+    ]).then(([v, s, c, ch]) => {
+      setVideos(v || []);
+      setSubjects(s || []);
+      setClasses(c || []);
+      setChapters(ch || []);
+    });
+  }, []);
+  
+  //VIDEO TYPES
+  const videoTypes = [...new Set(videos.map(v => v.video_type))];
 
-  // Available subjects based on selected class
+  // FILTER SUBJECTS BY CLASS
   const availableSubjects = useMemo(() => {
     if (!selectedClass) return subjects;
-    return subjects.filter((s) => s.classId === selectedClass);
-  }, [selectedClass]);
+    return subjects.filter(s => s.class_ref?.id === selectedClass);
+  }, [subjects, selectedClass]);
 
-  // Search results
+  // SEARCH LOGIC (REAL)
   const videoResults = useMemo(() => {
-    return searchVideos(searchQuery, {
-      classId: selectedClass,
-      subjectId: selectedSubject,
-      videoType: selectedVideoType,
+    return videos.filter(v => {
+      const text =
+        v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const cls = !selectedClass || v.subject?.class_ref?.id === selectedClass;
+      const sub = !selectedSubject || v.subject?.id === selectedSubject;
+      const type = !selectedVideoType || v.video_type === selectedVideoType;
+
+      return text && cls && sub && type;
     });
-  }, [searchQuery, selectedClass, selectedSubject, selectedVideoType]);
+  }, [videos, searchQuery, selectedClass, selectedSubject, selectedVideoType]);
 
   const subjectResults = useMemo(() => {
-    return searchSubjects(searchQuery, selectedClass);
-  }, [searchQuery, selectedClass]);
+    return subjects.filter(s => {
+      const text = s.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const cls = !selectedClass || s.class_ref?.id === selectedClass;
+      return text && cls;
+    });
+  }, [subjects, searchQuery, selectedClass]);
 
-  const chapterResults = useMemo(() => {
-    return searchChapters(searchQuery, selectedSubject);
-  }, [searchQuery, selectedSubject]);
+   const chapterResults = useMemo(() => {
+    return chapters.filter(ch => {
+      const text =
+        ch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ch.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const sub = !selectedSubject || ch.subject === selectedSubject;
+      return text && sub;
+    });
+  }, [chapters, searchQuery, selectedSubject]);
 
   // Update URL when search changes
+  // URL SYNC
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);

@@ -13,6 +13,9 @@ from .serializers import (
     PlaylistSerializer
 )
 
+from django.db.models import Q
+
+
 # ===========================
 # PUBLIC APIs
 # ===========================
@@ -20,8 +23,17 @@ from .serializers import (
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def all_videos(request):
-    data = Video.objects.filter(is_active=True)
-    return Response(VideoSerializer(data, many=True).data)
+    q = request.query_params.get("search", "").strip()
+
+    videos = Video.objects.filter(is_active=True)
+
+    if q:
+        videos = videos.filter(
+            Q(title__icontains=q) |
+            Q(description__icontains=q)
+        )
+
+    return Response(VideoSerializer(videos, many=True).data)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -31,8 +43,14 @@ def classes_list(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def class_detail(request, class_id):
+    cls = get_object_or_404(Class, id=class_id, is_active=True)
+    return Response(ClassSerializer(cls).data)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def subjects_by_class(request, class_id):
-    data = Subject.objects.filter(class_ref_id=class_id, is_active=True)
+    data = Subject.objects.filter(class_ref__id=class_id, is_active=True)
     return Response(SubjectSerializer(data, many=True).data)
 
 @api_view(['GET'])
@@ -44,20 +62,40 @@ def chapters_by_subject(request, subject_id):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def videos_by_chapter(request, chapter_id):
-    data = Video.objects.filter(chapter_id=chapter_id, is_active=True)
-    return Response(VideoSerializer(data, many=True).data)
+    videos = Video.objects.filter(chapter_id=chapter_id,is_active=True).select_related("chapter__subject__class_ref")
+    serializer = VideoSerializer(videos, many=True)
+    return Response(serializer.data)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def video_detail(request, video_id):
-    video = get_object_or_404(Video, id=video_id, is_active=True)  # 🔧 added is_active filter
-    return Response(VideoSerializer(video).data)
+    video = get_object_or_404(Video, id=video_id, is_active=True)
+    return Response(VideoDetailSerializer(video).data)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def trending_videos(request):
     data = Video.objects.filter(is_trending=True, is_active=True)
     return Response(VideoSerializer(data, many=True).data)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def search_subjects(request):
+    q = request.query_params.get("q", "")
+    subjects = Subject.objects.filter(name__icontains=q)
+    serializer = SubjectSerializer(subjects, many=True)
+    return Response(serializer.data)
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def search_chapters(request):
+    q = request.query_params.get("q", "")
+    chapters = Chapter.objects.filter(name__icontains=q)
+    serializer = ChapterSerializer(chapters, many=True)
+    return Response(serializer.data)
+
+
 
 # ===========================
 # ADMIN APIs
@@ -69,13 +107,15 @@ def admin_videos_list(request):
     videos = Video.objects.all()
     return Response(VideoSerializer(videos, many=True).data)
 
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def create_video(request):
     serializer = VideoCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    video = serializer.save()   # 🔧 capture instance
-    return Response(VideoSerializer(video).data, status=201)  # 🔧 return full serializer
+    video = serializer.save()
+    return Response(VideoSerializer(video).data, status=201)
+
 
 @api_view(['PATCH'])
 @permission_classes([IsAdminUser])
@@ -84,7 +124,8 @@ def update_video(request, video_id):
     serializer = VideoCreateSerializer(video, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     video = serializer.save()
-    return Response(VideoSerializer(video).data)  # 🔧 return full serializer
+    return Response(VideoSerializer(video).data)
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
@@ -93,20 +134,23 @@ def delete_video(request, video_id):
     video.delete()
     return Response({"success": True})
 
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def bulk_update_videos(request):
-    ids = request.data.get("video_ids", [])   # 🔧 frontend sends video_ids, not ids
+    ids = request.data.get("video_ids", [])
     updates = request.data.get("updates", {})
     Video.objects.filter(id__in=ids).update(**updates)
     return Response({"updatedCount": len(ids)})
 
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def bulk_delete_videos(request):
-    ids = request.data.get("video_ids", [])   # 🔧 same here
+    ids = request.data.get("video_ids", [])
     deleted, _ = Video.objects.filter(id__in=ids).delete()
     return Response({"deletedCount": deleted})
+
 
 # ===========================
 # PLAYLIST ADMIN
@@ -118,13 +162,15 @@ def playlists_list(request):
     data = Playlist.objects.all()
     return Response(PlaylistSerializer(data, many=True).data)
 
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def create_playlist(request):
     serializer = PlaylistSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     playlist = serializer.save()
-    return Response(PlaylistSerializer(playlist).data, status=201)  # 🔧 return normalized
+    return Response(PlaylistSerializer(playlist).data, status=201)
+
 
 @api_view(['PATCH'])
 @permission_classes([IsAdminUser])
@@ -133,7 +179,8 @@ def update_playlist(request, playlist_id):
     serializer = PlaylistSerializer(playlist, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     playlist = serializer.save()
-    return Response(PlaylistSerializer(playlist).data)  # 🔧 return normalized
+    return Response(PlaylistSerializer(playlist).data)
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
@@ -141,3 +188,6 @@ def delete_playlist(request, playlist_id):
     playlist = get_object_or_404(Playlist, id=playlist_id)
     playlist.delete()
     return Response({"success": True})
+
+
+

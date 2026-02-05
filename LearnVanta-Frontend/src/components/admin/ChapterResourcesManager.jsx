@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { chapters, getSubjectById, getClassById } from "../../data/mockData.js";
+import { apiRequest } from "../../config/api.js";
 import {
   getAllResources,
   deleteResource,
   RESOURCE_TYPES,
   RESOURCE_TYPE_LABELS,
-  isMockMode
 } from "../../services/resourceService.js";
 import ResourceUploadModal from "./ResourceUploadModal.jsx";
 import DeleteConfirmModal from "./DeleteConfirmModal.jsx";
@@ -64,6 +63,10 @@ const FolderIcon = () => (
 );
 
 const ChapterResourcesManager = () => {
+  const [chapters, setChapters] = useState([]);
+const [subjects, setSubjects] = useState([]);
+const [classes, setClasses] = useState([]);
+
   const [resources, setResources] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,8 +77,32 @@ const ChapterResourcesManager = () => {
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    loadResources();
-  }, []);
+  const loadMeta = async () => {
+    try {
+      const [ch, sub, cls] = await Promise.all([
+        apiRequest("/content/chapters/all/"),
+        apiRequest("/content/subjects/all/"),
+        apiRequest("/content/classes/")
+      ]);
+
+      setChapters(ch || []);
+      setSubjects(sub || []);
+      setClasses(cls || []);
+    } catch (e) {
+      setChapters([]);
+      setSubjects([]);
+      setClasses([]);
+    }
+  };
+
+  loadMeta();
+}, []);
+
+useEffect(() => {
+  loadResources();
+}, []);
+
+
 
   const loadResources = async () => {
     setIsLoading(true);
@@ -127,9 +154,10 @@ const ChapterResourcesManager = () => {
 
   // Get chapter info for each resource
   const enrichedResources = resources.map(resource => {
-    const chapter = chapters.find(c => c.id === resource.chapterId);
-    const subject = chapter ? getSubjectById(chapter.subjectId) : null;
-    const classData = subject ? getClassById(subject.classId) : null;
+  const chapter = chapters.find(c => c.id === resource.chapterId);
+  const subject = subjects.find(s => s.id === chapter?.subject);
+  const classData = classes.find(c => c.id === subject?.class_ref);
+
     return {
       ...resource,
       chapterName: chapter?.name || "Unknown Chapter",
@@ -200,9 +228,9 @@ const ChapterResourcesManager = () => {
         <div className="resources-manager-title">
           <h2>Chapter Resources</h2>
           <p>{resources.length} resource{resources.length !== 1 ? "s" : ""} uploaded</p>
-          {isMockMode() && (
+          {/* {isMockMode() && (
             <span className="mock-badge">Demo Mode</span>
-          )}
+          )} */}
         </div>
         <div className="resources-manager-actions">
           <button className="btn btn-outline btn-sm" onClick={loadResources}>
@@ -305,16 +333,18 @@ const ChapterResourcesManager = () => {
                       </div>
                     </div>
                     <div className="resource-item-actions">
-                      {resource.isMock && (
+                      {/* {resource.isMock && (
                         <span className="resource-mock-tag">Mock</span>
-                      )}
+                      )} */}
                       <button
-                        className="btn btn-ghost btn-sm"
-                        title="Download"
-                        disabled={resource.isMock}
-                      >
-                        <DownloadIcon />
-                      </button>
+  className="btn btn-ghost btn-sm"
+  title="Download"
+  disabled={!resource.file_url}
+  onClick={() => window.open(resource.file_url, "_blank")}
+>
+  <DownloadIcon />
+</button>
+
                       <button
                         className="btn btn-ghost btn-sm danger"
                         title="Delete"

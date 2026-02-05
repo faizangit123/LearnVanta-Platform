@@ -235,8 +235,8 @@ const VideoFilters = ({
                 >
                   <option value="all">All Types</option>
                   {videoTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    <option key={type} value={type.toLowerCase()}>
+                      {type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()}
                     </option>
                   ))}
                 </select>

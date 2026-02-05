@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { chapters as mockChapters, getChapterById, getSubjectById } from "../../data/mockData.js";
+
 import { 
   uploadResource, 
   RESOURCE_TYPES, 
@@ -7,7 +7,7 @@ import {
   formatFileSize,
   isMockMode
 } from "../../services/resourceService.js";
-import { apiRequest, API_ENDPOINTS } from "../../config/api.js"; // 🔧 ADDED
+import { apiRequest, } from "../../config/api.js";  
 
 // Icons
 const XIcon = () => (
@@ -47,8 +47,8 @@ const AlertIcon = () => (
 );
 
 const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }) => {
-  const [chapters, setChapters] = useState([]);        // 🔧 ADDED
-  const [subjects, setSubjects] = useState([]);       // 🔧 ADDED
+  const [chapters, setChapters] = useState([]);        
+  const [subjects, setSubjects] = useState([]);       
 
   const [selectedChapter, setSelectedChapter] = useState(editResource?.chapterId || "");
   const [resourceType, setResourceType] = useState(editResource?.type || RESOURCE_TYPES.NOTES);
@@ -59,23 +59,25 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
-  if (!isOpen) return null;
+
 
     // ============================================
-  // 🔧 ADDED: Load chapters properly
+  // Load chapters + subjects
   // ============================================
 
   useEffect(() => {
     const loadData = async () => {
       try {
         if (isMockMode()) {
-          setChapters(mockChapters);
-        } else {
-          const ch = await apiRequest(API_ENDPOINTS.chapters.bySubject("all"));
-          const sub = await apiRequest("/content/subjects/all/");
-          setChapters(ch || []);
-          setSubjects(sub || []);
-        }
+  setChapters([]);
+  setSubjects([]);
+} else {
+  const ch = await apiRequest("/content/chapters/all/");
+  const sub = await apiRequest("/content/subjects/all/");
+  setChapters(ch || []);
+  setSubjects(sub || []);
+}
+
       } catch {
         setChapters([]);
         setSubjects([]);
@@ -84,6 +86,29 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
 
     loadData();
   }, []);
+
+  useEffect(() => {
+  if (editResource) {
+    setSelectedChapter(String(editResource.chapterId));
+    setResourceType(editResource.type);
+    setCustomTitle(editResource.title || "");
+  } else {
+    setSelectedChapter("");
+    setResourceType(RESOURCE_TYPES.NOTES);
+    setCustomTitle("");
+  }
+}, [editResource]);
+
+ 
+  const handleClose = () => {
+    setSelectedChapter("");
+    setResourceType(RESOURCE_TYPES.NOTES);
+    setFile(null);
+    setCustomTitle("");
+    setError(null);
+    onClose();
+  }; 
+
 
   const handleFileSelect = (selectedFile) => {
     setError(null);
@@ -155,21 +180,24 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
     }
   };
 
-  const handleClose = () => {
-    setSelectedChapter("");
-    setResourceType(RESOURCE_TYPES.NOTES);
-    setFile(null);
-    setCustomTitle("");
-    setError(null);
-    onClose();
-  };
 
   // ============================================
   //  FIXED: chapter + subject resolution
   // ============================================
 
-  const selectedChapterData = chapters.find(c => c.id === selectedChapter);
-  const selectedSubject = subjects.find(s => s.id === selectedChapterData?.subjectId);
+  const selectedChapterData = chapters.find(
+  c => String(c.id) === String(selectedChapter)
+);
+
+  const selectedSubject = subjects.find(
+  s => String(s.id) === String(selectedChapterData?.subject)
+);
+
+  // -------------------------
+  // Render
+  // -------------------------
+  if (!isOpen) return null;
+
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
@@ -204,7 +232,10 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
               >
                 <option value="">Choose a chapter...</option>
                 {chapters.map((chapter) => {
-                  const subject = getSubjectById(chapter.subjectId);
+                  const subject = subjects.find(
+  s => String(s.id) === String(chapter.subject)
+);
+
                   return (
                     <option key={chapter.id} value={chapter.id}>
                       {subject?.name} - {chapter.name}
@@ -214,7 +245,7 @@ const ResourceUploadModal = ({ isOpen, onClose, onSuccess, editResource = null }
               </select>
               {selectedChapterData && (
                 <p className="form-hint">
-                  {selectedSubject?.name} • Chapter {selectedChapterData.order}
+                  {selectedSubject?.name} • Chapter {selectedChapterData.name}
                 </p>
               )}
             </div>

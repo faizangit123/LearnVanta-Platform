@@ -1,13 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { MainLayout } from "../components/layout";
-import {
-  getSubjectById,
-  getClassById,
-  getChaptersBySubject,
-  getVideosByChapter,
-  formatViews,
-} from "../data/mockData";
+import { apiRequest } from "../config/api";
+
+
 
 // Icons
 const BookIcon = () => (
@@ -79,18 +75,58 @@ const LayersIcon = () => (
   </svg>
 );
 
+
+const formatViews = (num) => {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+};
 const SubjectPage = () => {
   const { subjectId } = useParams();
-  const subject = getSubjectById(subjectId);
-  const classData = subject ? getClassById(subject.classId) : null;
-  const chapters = subject ? getChaptersBySubject(subjectId) : [];
+
+  const [subject, setSubject] = useState(null);
+  const [classData, setClassData] = useState(null);
+  const [chapters, setChapters] = useState([]);
+  const [videos, setVideos] = useState([]);
+
+    // REAL BACKEND LOAD
+  useEffect(() => {
+    Promise.all([
+      apiRequest(`/content/subjects/${subjectId}/`),
+      apiRequest(`/content/chapters/?subject=${subjectId}`),
+      apiRequest(`/content/videos/?subject=${subjectId}`),
+    ])
+      .then(([subjectData, chaptersData, videosData]) => {
+        setSubject(subjectData);
+        setClassData(subjectData.class_ref);
+        setChapters(chaptersData || []);
+        setVideos(videosData || []);
+      })
+      .catch(() => {
+        setSubject(null);
+      });
+  }, [subjectId]);
+
+  //  if (!subject || !classData) {
+  //   return (
+  //     <MainLayout>
+  //       <div className="container">
+  //         <h1>Subject Not Found</h1>
+  //         <Link to="/">Go Home</Link>
+  //       </div>
+  //     </MainLayout>
+  //   );
+  // }
   
   // Calculate totals
-  const totalVideos = chapters.reduce((acc, ch) => acc + ch.videoCount, 0);
-  const totalViews = chapters.reduce((acc, ch) => {
-    const chapterVideos = getVideosByChapter(ch.id);
-    return acc + chapterVideos.reduce((sum, v) => sum + v.views, 0);
-  }, 0);
+  // const totalVideos = chapters.reduce((acc, ch) => acc + ch.videoCount, 0);
+  // const totalViews = chapters.reduce((acc, ch) => {
+  //   const chapterVideos = getVideosByChapter(ch.id);
+  //   return acc + chapterVideos.reduce((sum, v) => sum + v.views, 0);
+  // }, 0);
+
+    const totalViews = videos.reduce((acc, v) => acc + v.views, 0);
+
 
   const features = [
     {
@@ -168,7 +204,7 @@ const SubjectPage = () => {
                 <div className="subject-stat-label">Chapters</div>
               </div>
               <div className="subject-stat">
-                <div className="subject-stat-value">{subject.videoCount}+</div>
+                <div className="subject-stat-value">{videos.length}</div>
                 <div className="subject-stat-label">Videos</div>
               </div>
               <div className="subject-stat">
@@ -220,9 +256,8 @@ const SubjectPage = () => {
           {chapters.length > 0 ? (
             <div className="subject-chapters-list">
               {chapters.map((chapter, index) => {
-                const chapterVideos = getVideosByChapter(chapter.id);
-                const chapterViews = chapterVideos.reduce((acc, v) => acc + v.views, 0);
-                
+               const chapterVideos = videos.filter(v => v.chapter === chapter.id);
+               const chapterViews = chapterVideos.reduce((acc, v) => acc + v.views, 0);
                 return (
                   <Link
                     key={chapter.id}
@@ -239,7 +274,7 @@ const SubjectPage = () => {
                       <div className="subject-chapter-meta">
                         <span className="subject-chapter-stat">
                           <PlayCircleIcon />
-                          {chapter.videoCount} Videos
+                         {chapterVideos.length} Videos
                         </span>
                         {chapterVideos.length > 0 && (
                           <span className="subject-chapter-stat">

@@ -5,10 +5,10 @@
 // ============================================
 
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
-  useMock: String(import.meta.env.VITE_USE_MOCK) === 'true',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+  useMock: false,
   timeout: 30000,
-  apiPrefix: '/api/v1',
+  apiPrefix: '',
 };
 
 // ============================================
@@ -80,28 +80,30 @@ export const API_ENDPOINTS = {
   },
 
   notes: {
-    byVideo: (videoId) => `/user/notes/${videoId}/`,
+    byVideo: (videoId) => `/user/notes/video/${videoId}/`,
+    list: '/user/notes/',
+     detail: (noteId) => `/user/notes/${noteId}/`,
   },
 
   // =========================
   // RESOURCES 
   // =========================
   resources: {
-    list: '/resources/resources/',
-    byChapter: (chapterId) => `/resources/chapters/${chapterId}/resources/`,
-    detail: (id) => `/resources/resources/${id}/`,
-    download: (id) => `/resources/resources/${id}/download/`,
-    trackDownload: (id) => `/resources/resources/${id}/track-download/`,
-  },
+  list: '/resources/',
+  byChapter: (chapterId) => `/resources/chapters/${chapterId}/`,
+  detail: (id) => `/resources/${id}/`,
+  trackDownload: (id) => `/resources/${id}/track-download/`,
+},
+
 
   // =========================
   // ACTIVITIES 
   // =========================
   activities: {
-    list: '/activities/activities/',
-    recent: '/activities/activities/recent/',
-    clear: '/activities/activities/clear/',
-    stats: '/activities/activities/stats/',
+    list: '/activities/',
+    recent: '/activities/recent/',
+    clear: '/activities/clear/',
+    stats: '/activities/stats/',
   },
 
   // =========================
@@ -139,9 +141,6 @@ export const clearAllTokens = () => {
 // ============================================
 
 export const apiRequest = async (endpoint, options = {}) => {
-  if (API_CONFIG.useMock) {
-    return null;
-  }
 
   const url = `${API_CONFIG.baseUrl}${API_CONFIG.apiPrefix}${endpoint}`;
   const token = getAuthToken();
@@ -241,3 +240,5 @@ export const formatApiError = (error) => {
   if (error.message) return error.message;
   return 'An unexpected error occurred';
 };
+
+

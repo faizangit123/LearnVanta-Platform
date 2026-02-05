@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { formatViews } from "../data/mockData";
+import { formatViews } from "../utils/format";
+
 
 // Icons
 const PlayIcon = () => (

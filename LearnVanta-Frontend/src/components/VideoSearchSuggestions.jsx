@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { videos, subjects, chapters } from "../data/mockData.js";
+import { apiRequest } from "../config/api.js";
 
 // Icons
 const SearchIcon = () => (
@@ -55,9 +55,50 @@ const VideoSearchSuggestions = ({
   const [isOpen, setIsOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [dropdownPos, setDropdownPos] = useState(null);
+  const [videoSuggestions, setVideoSuggestions] = useState([]);
+const [subjectSuggestions, setSubjectSuggestions] = useState([]);
+const [chapterSuggestions, setChapterSuggestions] = useState([]);
+const [trendingVideos, setTrendingVideos] = useState([]);
   const inputRef = useRef(null);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+  if (!value || value.length < 2) {
+    setVideoSuggestions([]);
+    setSubjectSuggestions([]);
+    setChapterSuggestions([]);
+    return;
+  }
+
+  const fetchAll = async () => {
+    try {
+      const [videos, subjects, chapters] = await Promise.all([
+  apiRequest(`/content/videos/?search=${encodeURIComponent(value)}`),
+  apiRequest(`/content/subjects/search/?q=${encodeURIComponent(value)}`),
+  apiRequest(`/content/chapters/search/?q=${encodeURIComponent(value)}`)
+]);
+
+
+      setVideoSuggestions(videos || []);
+      setSubjectSuggestions(subjects || []);
+      setChapterSuggestions(chapters || []);
+    } catch (err) {
+      console.error("Search error", err);
+    }
+  };
+
+  fetchAll();
+}, [value]);
+
+useEffect(() => {
+  const loadTrending = async () => {
+    const data = await apiRequest("/content/videos/trending/");
+    setTrendingVideos(data || []);
+  };
+  loadTrending();
+}, []);
+
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -106,43 +147,6 @@ const VideoSearchSuggestions = ({
       window.removeEventListener('scroll', updatePosition, true);
     };
   }, [isOpen, value]);
-
-  // Filter suggestions based on input
-  const getVideoSuggestions = () => {
-    if (!value || value.length < 2) return [];
-    const query = value.toLowerCase();
-    return videos
-      .filter(v => 
-        v.title.toLowerCase().includes(query) || 
-        v.description.toLowerCase().includes(query)
-      )
-      .slice(0, 5);
-  };
-
-  const getSubjectSuggestions = () => {
-    if (!value || value.length < 2) return [];
-    const query = value.toLowerCase();
-    return subjects
-      .filter(s => s.name.toLowerCase().includes(query))
-      .slice(0, 3);
-  };
-
-  const getChapterSuggestions = () => {
-    if (!value || value.length < 2) return [];
-    const query = value.toLowerCase();
-    return chapters
-      .filter(c => c.name.toLowerCase().includes(query))
-      .slice(0, 3);
-  };
-
-  const getTrendingVideos = () => {
-    return videos.filter(v => v.isTrending).slice(0, 4);
-  };
-
-  const videoSuggestions = getVideoSuggestions();
-  const subjectSuggestions = getSubjectSuggestions();
-  const chapterSuggestions = getChapterSuggestions();
-  const trendingVideos = getTrendingVideos();
 
   const hasSuggestions = videoSuggestions.length > 0 || subjectSuggestions.length > 0 || chapterSuggestions.length > 0;
   const showDropdown = isOpen && (hasSuggestions || value.length === 0);

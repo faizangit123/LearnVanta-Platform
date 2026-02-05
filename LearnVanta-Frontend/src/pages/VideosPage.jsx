@@ -105,7 +105,7 @@ const VideosPage = () => {
   // correct Django class relation
   const filteredSubjects = useMemo(() => {
     if (selectedClass === "all") return subjects;
-    return subjects.filter((s) => s.class_ref?.id === selectedClass);
+    return subjects.filter((s) => s.class_ref === selectedClass);
   }, [selectedClass, subjects]);
 
   // proper duration parsing (HH:MM:SS)
@@ -113,7 +113,7 @@ const VideosPage = () => {
     if (!durationStr) return 0;
     const parts = durationStr.split(":").map(Number);
     if (parts.length === 3) {
-      return parts[0] * 60 + parts[1];
+      return parts[0] * 60 + parts[1] + parts[2] / 60
     }
     if (parts.length === 2) {
       return parts[0];
@@ -123,14 +123,17 @@ const VideosPage = () => {
 
   const filteredVideos = useMemo(() => {
     let result = videos.filter((video) => {
+        const chapter = chapters.find(c => c.id === (video.chapter?.id || video.chapter));
+  const subject = subjects.find(s => s.id === chapter?.subject);
       const matchesSearch = searchQuery === "" ||
         video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         video.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesSubject = selectedSubject === "all" || video.subject?.id === selectedSubject;
+      const matchesSubject = selectedSubject === "all" || video.subjectId === selectedSubject;
 
       const matchesType = selectedType === "all" || video.video_type === selectedType;
 
-      const matchesClass = selectedClass === "all" || video.subject?.class_ref?.id === selectedClass;
+      const matchesClass =
+    selectedClass === "all" || subject?.class_ref === selectedClass;
       
       let matchesDuration = true;
       if (selectedDuration !== "all") {
@@ -164,7 +167,20 @@ const VideosPage = () => {
     });
 
     return result;
-  }, [videos, searchQuery, selectedClass, selectedSubject, selectedType, selectedDuration, selectedWatchStatus, sortBy, progressMap]);
+  }, [
+  videos,
+  chapters,
+  subjects,
+  searchQuery,
+  selectedClass,
+  selectedSubject,
+  selectedType,
+  selectedDuration,
+  selectedWatchStatus,
+  sortBy,
+  progressMap
+]);
+
 
 
   const displayedVideos = useMemo(
@@ -207,7 +223,9 @@ const VideosPage = () => {
   const hasActiveFilters = selectedClass !== "all" || selectedSubject !== "all" || selectedType !== "all" || selectedDuration !== "all" || selectedWatchStatus !== "all" || searchQuery !== "";
 
   const handleFavoriteClick = useCallback((video) => {
-    const chapter = chapters.find(c => c.id === video.chapter?.id);
+    const chapter = chapters.find(
+      c => c.id === (video.chapter?.id || video.chapter)
+    );
     toggleFavorite({
       id: video.id,          
       title: video.title,
@@ -284,8 +302,10 @@ const VideosPage = () => {
               <>
                 <div className="videos-grid">
                   {displayedVideos.map((video, index) => {
-                    const chapter = chapters.find(c => c.id === video.chapter.id);
-                    return (
+                    const chapter = chapters.find(
+                      c => c.id === (video.chapter?.id || video.chapter)
+                      );                  
+                      return (
                       <VideoCard
                         key={video.id}
                         video={video}

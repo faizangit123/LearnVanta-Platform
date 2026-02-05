@@ -2,7 +2,9 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "../components/layout/index.js";
 import { useWatchHistory } from "../hooks/useWatchHistory.js";
-import { videos as allVideos, chapters } from "../data/mockData.js";
+import { apiRequest } from "../config/api";
+import { useEffect, useState } from "react";
+
 
 // Icons
 const PlayIcon = () => (
@@ -41,6 +43,14 @@ const ArrowLeftIcon = () => (
 
 const ContinueWatchingPage = () => {
   const { history, isLoading, removeFromHistory } = useWatchHistory();
+  const [allVideos, setAllVideos] = useState([]);
+
+    useEffect(() => {
+    apiRequest("/content/videos/")
+      .then(setAllVideos)
+      .catch(() => setAllVideos([]));
+  }, []);
+
 
   // Show ALL watched videos (no filter)
   const continueWatchingItems = history;
@@ -340,7 +350,6 @@ const ContinueWatchingPage = () => {
               {continueWatchingItems.map((item) => {
                 const video = getVideoDetails(item);
                 if (!video) return null;
-                const chapter = chapters.find((c) => c.id === video.chapterId);
                 const statusInfo = getStatusInfo(item.progress);
 
                 return (
@@ -400,7 +409,7 @@ const ContinueWatchingPage = () => {
                       <div style={styles.content}>
                         <h3 style={styles.videoTitle}>{video.title}</h3>
                         <p style={styles.chapterName}>
-                          {chapter?.name || video.chapterName}
+                          {video.chapterName}
                         </p>
                         <div style={styles.progressText}>
                           <span style={{ color: statusInfo.color }}>{statusInfo.label}</span>

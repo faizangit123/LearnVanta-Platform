@@ -31,6 +31,9 @@ const PlayCircleIcon = () => <svg width="48" height="48" viewBox="0 0 24 24" fil
 const ErrorIcon = () => <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
 
 const VideoPlayer = ({ video, getVideoEmbedUrl, initialTime = 0, onTimeUpdate }) => {
+  const type = video.videoType || video.video_type;
+const url = video.videoUrl || video.video_url;
+
   const [hasError, setHasError] = useState(false);
   const [hasSetInitialTime, setHasSetInitialTime] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -61,19 +64,19 @@ const VideoPlayer = ({ video, getVideoEmbedUrl, initialTime = 0, onTimeUpdate })
   }, []);
 
   useEffect(() => {
-    if (video.videoType === "direct" && video.videoUrl) {
+    if (type === "direct" && url) {
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
-  }, [video.videoType, video.videoUrl, handleKeyDown]);
+  }, [type, url, handleKeyDown]);
 
   useEffect(() => { setHasSetInitialTime(false); }, [video.id]);
 
-  if (video.videoType === "direct" && video.videoUrl) {
+  if (type === "direct" && url) {
     return (
       <div className="video-player-wrapper video-player-with-shortcuts" onMouseEnter={() => setShowShortcuts(true)} onMouseLeave={() => setShowShortcuts(false)}>
         <video ref={videoRef} className="video-html5" controls poster={video.thumbnail} onError={() => setHasError(true)} onLoadedMetadata={handleLoadedMetadata} onTimeUpdate={handleTimeUpdate}>
-          <source src={video.videoUrl} type="video/mp4" /><source src={video.videoUrl} type="video/webm" />
+          <source src={url} type="video/mp4" /><source src={url} type="video/webm" />
         </video>
         <ShortcutsOverlay isVisible={showShortcuts} />
         {hasError && <div className="video-error"><ErrorIcon /><p>Unable to load video.</p></div>}

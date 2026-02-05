@@ -1,7 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "../components/layout";
-import { subjects, chapters, videos, getVideosBySubject } from "../data/mockData";
+import { apiRequest } from "../config/api";
+import { useEffect, useState } from "react";
 
 // Icons
 const GraduationCapIcon = () => (
@@ -113,7 +114,14 @@ const getSubjectIcon = (iconName) => {
 };
 
 const CollegePage = () => {
-  const collegeSubjects = subjects.filter(s => s.classId === "college");
+  const [collegeSubjects, setCollegeSubjects] = useState([]);
+
+useEffect(() => {
+  apiRequest("/content/subjects/college/")
+    .then(setCollegeSubjects)
+    .catch(() => setCollegeSubjects([]));
+}, []);
+
   const totalVideos = collegeSubjects.reduce((acc, s) => acc + s.videoCount, 0);
   const totalChapters = collegeSubjects.reduce((acc, s) => acc + s.chapterCount, 0);
 
@@ -213,7 +221,6 @@ const CollegePage = () => {
 
           <div className="college-courses-grid">
             {collegeSubjects.map((subject, index) => {
-              const subjectChapters = chapters.filter(ch => ch.subjectId === subject.id);
               return (
                 <Link
                   key={subject.id}

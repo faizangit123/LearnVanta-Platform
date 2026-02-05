@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useFavorites } from '../hooks/useFavorites';
 import { MainLayout } from '../components/layout';
-import { subjects, chapters, videos } from '../data/mockData';
 
 // Icons
 const HeartIcon = ({ filled }) => (
@@ -551,22 +550,8 @@ const FavoritesPage = () => {
 
   // Enrich favorites with subject info
   const enrichedFavorites = useMemo(() => {
-    return favorites.map(fav => {
-      const video = videos.find(v => v.id === fav.videoId);
-      if (video) {
-        const subject = subjects.find(s => s.id === video.subjectId);
-        const chapter = chapters.find(c => c.id === video.chapterId);
-        return {
-          ...fav,
-          subjectId: video.subjectId,
-          subjectName: subject?.name,
-          chapterId: video.chapterId,
-          chapterName: chapter?.name || fav.chapterName,
-        };
-      }
-      return fav;
-    });
-  }, [favorites]);
+  return favorites;
+}, [favorites]);
 
   // Build dynamic collections from subjects in favorites
   const dynamicCollections = useMemo(() => {

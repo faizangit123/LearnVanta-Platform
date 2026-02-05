@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useMiniPlayer } from "../context/MiniPlayerContext";
-import { getVideoEmbedUrl } from "../data/mockData";
 
 // Icons
 const XIcon = () => (
@@ -109,7 +108,7 @@ const MiniPlayer = () => {
     <div className="mini-player">
       <div className="mini-player-content">
         <div className="mini-player-video">
-          <video ref={videoRef} src={miniPlayerVideo.videoUrl} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleLoadedMetadata} autoPlay playsInline />
+          <video ref={videoRef} src={miniPlayerVideo.videoUrl} onTimeUpdate={handleTimeUpdate} onLoadedMetadata={handleLoadedMetadata} autoPlay playsInline muted />
           <button onClick={togglePlay} className="mini-player-play-overlay">
             {isPlaying ? <PauseIcon /> : <PlayIcon />}
           </button>

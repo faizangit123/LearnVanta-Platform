@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "../components/layout";
 import { useAuth } from "../context/AuthContext.jsx";
-import { classes, subjects } from "../data/mockData.js";
+import { apiRequest } from "../config/api";
 import { getAllUsers, updateUserRole, deleteUser } from "../services/authService.js";
 import { getAllVideos, createVideo, updateVideo, deleteVideo as deleteVideoService, bulkDeleteVideos, bulkUpdateVideos } from "../services/videoManagementService.js";
 import { getRecentActivities, getActivityMeta, ACTIVITY_TYPES, clearActivityLogs } from "../services/activityLogService.js";
@@ -191,8 +191,9 @@ const getActivityIcon = (type) => {
 
 const AdminDashboard = () => {
   const { user: currentUser, isLoading } = useAuth();
-  const isAdmin = currentUser?.is_admin === true;
-
+  const isAdmin = currentUser?.isAdmin === true;
+  const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [activeTab, setActiveTab] = useState("overview");
   
   // Users state
@@ -243,6 +244,16 @@ const AdminDashboard = () => {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+  apiRequest("/content/classes/")
+    .then((data) => setClasses(data || []))
+    .catch(() => setClasses([]));
+
+  apiRequest("/content/subjects/")
+    .then((data) => setSubjects(data || []))
+    .catch(() => setSubjects([]));
+  }, []);
+
   // Load videos when switching to videos or overview tab
   useEffect(() => {
     if (activeTab === "videos" || activeTab === "overview") {
@@ -291,7 +302,7 @@ const AdminDashboard = () => {
   const loadActivityLogs = async () => {
     setActivityLoading(true);
     try {
-      const logs = getRecentActivities(50);
+      const logs = await getRecentActivities(50);
       setActivityLogs(logs);
     } catch (error) {
       showNotification("Failed to load activity logs", "error");
@@ -299,7 +310,16 @@ const AdminDashboard = () => {
       setActivityLoading(false);
     }
   };
-
+  
+  const handleClearActivityLogs = async () => {
+  try {
+    await clearActivityLogs();   // backend / service call
+    setActivityLogs([]);         // THIS is the missing piece
+    showNotification("All activity logs cleared");
+  } catch (error) {
+    showNotification("Failed to clear logs", "error");
+  }
+};
   const loadPlaylists = async () => {
     setPlaylistsLoading(true);
     try {
@@ -554,26 +574,25 @@ const AdminDashboard = () => {
   };
 
   const getActivityDescription = (log) => {
-    const { type, details } = log;
-    switch (type) {
-      case ACTIVITY_TYPES.USER_REGISTERED:
-        return `New user "${details.userName}" registered`;
-      case ACTIVITY_TYPES.USER_LOGIN:
-        return `"${details.userName}" logged in`;
-      case ACTIVITY_TYPES.ROLE_CHANGED:
-        return `"${details.userName}" role changed from ${details.previousRole} to ${details.newRole}`;
-      case ACTIVITY_TYPES.USER_DELETED:
-        return `User "${details.userName}" was deleted`;
-      case ACTIVITY_TYPES.VIDEO_CREATED:
-        return `Video "${details.videoTitle}" was added`;
-      case ACTIVITY_TYPES.VIDEO_UPDATED:
-        return `Video "${details.videoTitle}" was updated`;
-      case ACTIVITY_TYPES.VIDEO_DELETED:
-        return `Video "${details.videoTitle}" was deleted`;
-      default:
-        return "Unknown activity";
-    }
-  };
+  const { type, details } = log;
+  switch (type) {
+    case ACTIVITY_TYPES.USER_REGISTERED:
+      return `New user "${details.user_email}" registered`;
+    case ACTIVITY_TYPES.USER_LOGIN:
+      return `"${details.user_email}" logged in`;
+    case ACTIVITY_TYPES.VIDEO_CREATED:
+      return `Video "${details.videoTitle}" was added`;
+    case ACTIVITY_TYPES.VIDEO_UPDATED:
+      return `Video "${details.videoTitle}" was updated`;
+    case ACTIVITY_TYPES.VIDEO_DELETED:
+      return `Video "${details.videoTitle}" was deleted`;
+    case ACTIVITY_TYPES.PROFILE_UPDATED:
+      return `"${details.user_email}" updated profile`;
+    default:
+      return "System activity";
+  }
+};
+
 
   const getActivityColor = (type) => {
     const meta = getActivityMeta(type);
@@ -669,12 +688,14 @@ const AdminDashboard = () => {
             >
               Resources
             </button>
-            <button
+            {false && (
+              <button
               className={`admin-tab ${activeTab === "users" ? "active" : ""}`}
               onClick={() => setActiveTab("users")}
-            >
+              >
               Users
-            </button>
+              </button>
+              )}
             <button
               className={`admin-tab ${activeTab === "activity" ? "active" : ""}`}
               onClick={() => setActiveTab("activity")}
@@ -1115,7 +1136,7 @@ const AdminDashboard = () => {
                                 )}
                               </div>
                             </td>
-                            <td>{formatDate(user.createdAt)}</td>
+                            <td>{formatDate(user.created_at)}</td>
                             <td>
                               <div className="table-actions">
                                 {user.id === "admin_001" ? (
@@ -1175,6 +1196,12 @@ const AdminDashboard = () => {
                       <option value="users">User Activities</option>
                       <option value="videos">Video Activities</option>
                     </select>
+                    <button 
+                    className="btn btn-outline btn-sm"
+                    onClick={handleClearActivityLogs}
+                    >
+                    Clear All
+                    </button>
                     <button 
                       className="btn btn-outline btn-sm" 
                       onClick={loadActivityLogs}

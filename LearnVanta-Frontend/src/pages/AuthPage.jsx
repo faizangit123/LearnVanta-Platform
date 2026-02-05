@@ -99,7 +99,7 @@ const AuthPage = () => {
         }
         const result = await signup(formData.name, formData.email, formData.password);
 
-        // 🔧 Normalize backend response
+        // Normalize backend response
         const verificationPending = result.verificationPending || result.verification_pending;
         
         // Check if verification is pending

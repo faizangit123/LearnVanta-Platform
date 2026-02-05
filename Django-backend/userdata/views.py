@@ -36,18 +36,19 @@ def watch_history_list(request):
         return Response(serializer.data)
 
     if request.method == "POST":
-        video_id = request.data.get("videoId")
-        video = get_object_or_404(Video, id=video_id)
-        
-        
-        obj, created = WatchHistory.objects.get_or_create(
-           user=user,
-           video=video
-           )
-        
-        if not created:
-           obj.save()  # updates watched_at via auto_now
+        video_id = request.data.get("video_id")
+        if not video_id:
+            return Response({"error": "video_id required"}, status=400)
 
+        video = get_object_or_404(Video, id=video_id)
+
+        obj, created = WatchHistory.objects.get_or_create(
+            user=user,
+            video=video
+        )
+
+        if not created:
+            obj.save()  # updates watched_at via auto_now
 
         serializer = WatchHistorySerializer(obj)
         return Response(serializer.data)
@@ -64,7 +65,7 @@ def watch_history_delete(request, video_id):
 
 
 # ---------------------------
-# CONTINUE WATCHING
+# WATCH PROGRESS
 # ---------------------------
 
 @api_view(["GET", "POST"])
@@ -83,14 +84,19 @@ def progress_detail(request, video_id):
         return Response(serializer.data)
 
     if request.method == "POST":
-        current = request.data.get("currentTime", obj.current_time)
+        current = request.data.get("current_time", obj.current_time)
         duration = request.data.get("duration", obj.duration)
-        
+
+        try:
+            current = float(current)
+            duration = float(duration)
+        except:
+            return Response({"error": "Invalid progress values"}, status=400)
+
         obj.current_time = current
         obj.duration = duration
         obj.percentage = int((current / duration) * 100) if duration else 0
         obj.save()
-
 
         serializer = WatchProgressSerializer(obj)
         return Response(serializer.data)
@@ -126,10 +132,9 @@ def favorites_toggle(request, video_id):
     favorites = Favorite.objects.filter(user=user)
     serializer = FavoriteSerializer(favorites, many=True)
 
-    return Response({
-        "favorites": serializer.data,
-        "isFavorite": is_favorite
-    })
+    return Response(serializer.data)
+
+
 
 # ---------------------------
 # NOTES
@@ -152,6 +157,44 @@ def notes_by_video(request, video_id):
             serializer.save(user=user, video=video)
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
+    
+#-------------------------------------
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def notes_list_create(request):
+    if request.method == "GET":
+        notes = Note.objects.filter(user=request.user)
+        serializer = NoteSerializer(notes, many=True)
+        return Response(serializer.data)
+
+    if request.method == "POST":
+        serializer = NoteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+
+
+@api_view(["PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def note_detail(request, note_id):
+    note = get_object_or_404(Note, id=note_id, user=request.user)
+
+    if request.method == "PATCH":
+        serializer = NoteSerializer(note, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    if request.method == "DELETE":
+        note.delete()
+        return Response(status=204)
+
+
+#-----------------------------------    
+    
 
 
 # ---------------------------
@@ -181,9 +224,16 @@ def playlists_list(request):
 def playlists_add_video(request, playlist_id):
     playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
     video_id = request.data.get("video_id")
+
+    if not video_id:
+        return Response({"error": "video_id required"}, status=400)
+
     video = get_object_or_404(Video, id=video_id)
 
-    if not UserPlaylistVideo.objects.filter(playlist=playlist, video=video).exists():
+    if not UserPlaylistVideo.objects.filter(
+        playlist=playlist,
+        video=video
+    ).exists():
         UserPlaylistVideo.objects.create(
             playlist=playlist,
             video=video,
@@ -200,20 +250,15 @@ def playlists_remove_video(request, playlist_id):
     playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
     video_id = request.data.get("video_id")
 
-    # 1. Validate input
     if not video_id:
-        return Response(
-            {"error": "video_id is required"},
-            status=400
-        )
+        return Response({"error": "video_id required"}, status=400)
 
-    # 2. Delete the video
     UserPlaylistVideo.objects.filter(
         playlist=playlist,
         video_id=video_id
     ).delete()
 
-    # 3. Re-index remaining videos (CRITICAL)
+    # Re-index remaining videos
     remaining = UserPlaylistVideo.objects.filter(
         playlist=playlist
     ).order_by("order")
@@ -231,6 +276,9 @@ def playlists_remove_video(request, playlist_id):
 def playlists_reorder(request, playlist_id):
     playlist = get_object_or_404(UserPlaylist, id=playlist_id, user=request.user)
     new_order = request.data.get("video_ids", [])
+
+    if not isinstance(new_order, list):
+        return Response({"error": "video_ids must be a list"}, status=400)
 
     for index, vid in enumerate(new_order):
         UserPlaylistVideo.objects.filter(

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { searchVideos, searchSubjects, searchChapters, formatViews } from "../data/mockData.js";
+import { apiRequest } from "../config/api.js";
+import { formatViews } from "../utils/format.js"; // or keep your local function
 
 // Icons
 const SearchIcon = () => (
@@ -58,17 +59,40 @@ const SearchAutocomplete = ({
   const navigate = useNavigate();
 
   // Debounced search results
-  const results = useMemo(() => {
-    if (query.trim().length < 2) {
-      return { videos: [], subjects: [], chapters: [] };
+  const [results, setResults] = useState({
+  videos: [],
+  subjects: [],
+  chapters: [],
+});
+
+useEffect(() => {
+  if (query.trim().length < 2) {
+    setResults({ videos: [], subjects: [], chapters: [] });
+    return;
+  }
+
+  const fetchResults = async () => {
+    try {
+      const [videos, subjects, chapters] = await Promise.all([
+        apiRequest(`/content/videos/?search=${encodeURIComponent(query)}`),
+        apiRequest(`/content/subjects/search/?q=${encodeURIComponent(query)}`),
+        apiRequest(`/content/chapters/search/?q=${encodeURIComponent(query)}`),
+      ]);
+
+      setResults({
+        videos: (videos || []).slice(0, 5),
+        subjects: (subjects || []).slice(0, 3),
+        chapters: (chapters || []).slice(0, 3),
+      });
+    } catch (err) {
+      console.error("Search failed", err);
+      setResults({ videos: [], subjects: [], chapters: [] });
     }
-    
-    const videos = searchVideos(query).slice(0, 5);
-    const subjects = searchSubjects(query).slice(0, 3);
-    const chapters = searchChapters(query).slice(0, 3);
-    
-    return { videos, subjects, chapters };
-  }, [query]);
+  };
+
+  fetchResults();
+}, [query]);
+
 
   const totalResults = results.videos.length + results.subjects.length + results.chapters.length;
   const hasResults = totalResults > 0;
@@ -105,23 +129,22 @@ const SearchAutocomplete = ({
     inputRef.current?.focus();
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-      setIsOpen(false);
-      setQuery("");
-      onClose?.();
-    }
-  };
-
-  const handleItemClick = () => {
+  const handleSubmit = useCallback((e) => {
+  e.preventDefault();
+  if (query.trim()) {
+    navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     setIsOpen(false);
     setQuery("");
     onClose?.();
-  };
-  const handleKeyDown = useCallback((e) => {
-    if (!isOpen || !hasResults) return;
+  }
+}, [query, navigate, onClose]);
+
+  const handleItemClick = useCallback(() => {
+  setIsOpen(false);
+  setQuery("");
+  onClose?.();
+}, [onClose]);
+  const handleKeyDown = useCallback((e) => {if (!isOpen || !hasResults) return;
 
     switch (e.key) {
       case "ArrowDown":
@@ -152,7 +175,7 @@ const SearchAutocomplete = ({
       default:
         break;
     }
-  }, [isOpen, hasResults, activeIndex, allItems, navigate]);
+  }, [isOpen, hasResults, activeIndex, allItems, navigate,handleItemClick,handleSubmit]);
 
   // Highlight matching text
   const highlightMatch = (text, query) => {
@@ -398,7 +421,7 @@ const SearchAutocomplete = ({
                             {highlightMatch(video.title, query)}
                           </span>
                           <span style={styles.itemMeta}>
-                            {video.chapterName} • {formatViews(video.views)} views
+                            {video.chapter_name || video.chapter?.name || "Chapter"} • {formatViews(video.views || 0)} views
                           </span>
                         </div>
                         <span style={styles.duration}>{video.duration}</span>
@@ -436,7 +459,7 @@ const SearchAutocomplete = ({
                             {highlightMatch(subject.name, query)}
                           </span>
                           <span style={styles.itemMeta}>
-                            {subject.chapterCount} chapters • {subject.videoCount} videos
+                            {subject.chapter_count || 0} chapters • {subject.video_count || 0} videos
                           </span>
                         </div>
                       </Link>
@@ -473,7 +496,7 @@ const SearchAutocomplete = ({
                             {highlightMatch(chapter.name, query)}
                           </span>
                           <span style={styles.itemMeta}>
-                            {chapter.videoCount} videos
+                           {chapter.video_count || 0} videos
                           </span>
                         </div>
                       </Link>

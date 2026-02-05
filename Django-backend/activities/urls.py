@@ -10,4 +10,7 @@ urlpatterns = [
 
     # Clear all logs (admin only - dangerous)
     path("clear/", views.clear_activities, name="activities-clear"),
+    
+    path("recent/", views.activities_recent, name="activities-recent"),
+    path("stats/", views.activities_stats, name="activities-stats"),
 ]

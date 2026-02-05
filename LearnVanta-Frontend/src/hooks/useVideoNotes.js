@@ -1,15 +1,28 @@
 /**
  * Video Notes Hook
- * 
+ *
  * Manages video notes with localStorage persistence (mock mode)
  * or Django API calls (real mode).
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { API_CONFIG, API_ENDPOINTS, apiRequest } from "../config/api.js";
-import { useAuth } from "../contexts/AuthContext"; 
+import { useAuth } from "../context/AuthContext.jsx"; // 
 
 const STORAGE_KEY = "edustream_video_notes";
+
+// ============================================
+// SAFE ENDPOINT FALLBACK (CRITICAL)
+// ============================================
+
+const NOTES_ENDPOINTS = {
+  list: "/user/notes/",
+  byVideo: (id) => `/user/notes/video/${id}/`,
+  create: (id) => `/user/notes/video/${id}/`,
+  update: (id) => `/user/notes/${id}/`,
+  delete: (id) => `/user/notes/${id}/`,
+};
+
 
 // ============================================
 // LOCAL STORAGE HELPERS
@@ -51,7 +64,10 @@ export const useVideoNotes = (videoId) => {
   const [notes, setNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load notes
+  // ============================================
+  // LOAD NOTES
+  // ============================================
+
   useEffect(() => {
     const loadNotes = async () => {
       if (!isAuthenticated || !videoId) {
@@ -59,10 +75,11 @@ export const useVideoNotes = (videoId) => {
         setIsLoading(false);
         return;
       }
+
       setIsLoading(true);
       try {
         if (!API_CONFIG.useMock) {
-          const data = await apiRequest(API_ENDPOINTS.notes.byVideo(videoId));
+          const data = await apiRequest(NOTES_ENDPOINTS.byVideo(videoId));
           const normalized = (data || []).map(normalizeNote);
           setNotes(normalized);
         } else {
@@ -78,9 +95,9 @@ export const useVideoNotes = (videoId) => {
     };
 
     loadNotes();
-  }, [videoId, isAuthenticated]); 
+  }, [videoId, isAuthenticated]);
 
-  // Save notes to localStorage (mock mode only)
+  // Save notes to localStorage (mock only)
   const saveToStorage = useCallback((videoId, updatedNotes) => {
     if (API_CONFIG.useMock) {
       const allNotes = getLocalNotes();
@@ -89,21 +106,26 @@ export const useVideoNotes = (videoId) => {
     }
   }, []);
 
-  // Add a new note
+  // ============================================
+  // ADD NOTE
+  // ============================================
+
   const addNote = useCallback(async (content, timestamp = null) => {
     if (!isAuthenticated || !videoId) return null;
+
     if (!API_CONFIG.useMock) {
-      const newNote = await apiRequest(API_ENDPOINTS.notes.create, {
-        method: 'POST',
+      const newNote = await apiRequest(NOTES_ENDPOINTS.create(videoId),
+      {
+        method: "POST",
         body: JSON.stringify({
-          video_id: videoId,
           content,
           timestamp,
         }),
-      });
+          }
+        );
 
       const normalized = normalizeNote(newNote);
-      setNotes(prev => [...prev, normalized]);
+      setNotes((prev) => [...prev, normalized]);
       return normalized;
     }
 
@@ -117,19 +139,23 @@ export const useVideoNotes = (videoId) => {
       isPinned: false,
       isArchived: false,
     };
-    
+
     const updatedNotes = [...notes, newNote];
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
     return newNote;
   }, [notes, videoId, saveToStorage, isAuthenticated]);
 
-  // Update an existing note
+  // ============================================
+  // UPDATE NOTE
+  // ============================================
+
   const updateNote = useCallback(async (noteId, content) => {
     if (!isAuthenticated || !videoId) return;
+
     if (!API_CONFIG.useMock) {
-      await apiRequest(API_ENDPOINTS.notes.update(noteId), {
-        method: 'PATCH',
+      await apiRequest(NOTES_ENDPOINTS.update(noteId), {
+        method: "PATCH",
         body: JSON.stringify({ content }),
       });
     }
@@ -139,16 +165,21 @@ export const useVideoNotes = (videoId) => {
         ? { ...note, content, updatedAt: new Date().toISOString() }
         : note
     );
+
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
   }, [notes, videoId, saveToStorage, isAuthenticated]);
 
-  // Delete a note
+  // ============================================
+  // DELETE NOTE
+  // ============================================
+
   const deleteNote = useCallback(async (noteId) => {
     if (!isAuthenticated || !videoId) return;
+
     if (!API_CONFIG.useMock) {
-      await apiRequest(API_ENDPOINTS.notes.delete(noteId), {
-        method: 'DELETE',
+      await apiRequest(NOTES_ENDPOINTS.delete(noteId), {
+        method: "DELETE",
       });
     }
 
@@ -157,15 +188,18 @@ export const useVideoNotes = (videoId) => {
     saveToStorage(videoId, updatedNotes);
   }, [notes, videoId, saveToStorage, isAuthenticated]);
 
-  // Pin/unpin a note
+  // ============================================
+  // PIN / ARCHIVE
+  // ============================================
+
   const togglePin = useCallback(async (noteId) => {
     if (!isAuthenticated || !videoId) return;
-    const note = notes.find(n => n.id === noteId);
+    const note = notes.find((n) => n.id === noteId);
     if (!note) return;
 
     if (!API_CONFIG.useMock) {
-      await apiRequest(API_ENDPOINTS.notes.update(noteId), {
-        method: 'PATCH',
+      await apiRequest(NOTES_ENDPOINTS.update(noteId), {
+        method: "PATCH",
         body: JSON.stringify({ is_pinned: !note.isPinned }),
       });
     }
@@ -175,19 +209,19 @@ export const useVideoNotes = (videoId) => {
         ? { ...n, isPinned: !n.isPinned, updatedAt: new Date().toISOString() }
         : n
     );
+
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
   }, [notes, videoId, saveToStorage, isAuthenticated]);
 
-  // Archive/unarchive a note
-    const toggleArchive = useCallback(async (noteId) => {
+  const toggleArchive = useCallback(async (noteId) => {
     if (!isAuthenticated || !videoId) return;
-    const note = notes.find(n => n.id === noteId);
+    const note = notes.find((n) => n.id === noteId);
     if (!note) return;
 
     if (!API_CONFIG.useMock) {
-      await apiRequest(API_ENDPOINTS.notes.update(noteId), {
-        method: 'PATCH',
+      await apiRequest(NOTES_ENDPOINTS.update(noteId), {
+        method: "PATCH",
         body: JSON.stringify({ is_archived: !note.isArchived }),
       });
     }
@@ -197,6 +231,7 @@ export const useVideoNotes = (videoId) => {
         ? { ...n, isArchived: !n.isArchived, updatedAt: new Date().toISOString() }
         : n
     );
+
     setNotes(updatedNotes);
     saveToStorage(videoId, updatedNotes);
   }, [notes, videoId, saveToStorage, isAuthenticated]);
@@ -212,41 +247,29 @@ export const useVideoNotes = (videoId) => {
   };
 };
 
-// ============================================ 
-// UTILITY FUNCTIONS
 // ============================================
-/**
- * Get all notes across all videos
- */
+// UTILITY FUNCTIONS (SAFE)
+// ============================================
+
 export const getAllNotes = async () => {
-  const token = localStorage.getItem("token"); 
-
-
-  if (!token) return []; 
-
+  const token = localStorage.getItem("token");
+  if (!token) return [];
 
   if (!API_CONFIG.useMock) {
-    return apiRequest(API_ENDPOINTS.notes.list);
+    return apiRequest(NOTES_ENDPOINTS.list);
   }
 
   return getLocalNotes();
 };
 
-/**
- * Save all notes (used for bulk operations)
- */
 export const saveAllNotes = (allNotes) => {
   if (API_CONFIG.useMock) {
     saveLocalNotes(allNotes);
   }
 };
 
-/**
- * Get notes count for a specific video
- */
 export const getNotesCount = (videoId) => {
-  if (!videoId) return 0; 
-
+  if (!videoId) return 0;
   try {
     const allNotes = getLocalNotes();
     return (allNotes[videoId] || []).length;
@@ -255,21 +278,15 @@ export const getNotesCount = (videoId) => {
   }
 };
 
-/**
- * Delete all notes for a specific video
- */
 export const clearVideoNotes = async (videoId) => {
-  const token = localStorage.getItem("token"); 
-
-
-  if (!token || !videoId) return; 
-
+  const token = localStorage.getItem("token");
+  if (!token || !videoId) return;
 
   if (!API_CONFIG.useMock) {
-    const notes = await apiRequest(API_ENDPOINTS.notes.byVideo(videoId));
+    const notes = await apiRequest(NOTES_ENDPOINTS.byVideo(videoId));
     await Promise.all(
-      notes.map(note => 
-        apiRequest(API_ENDPOINTS.notes.delete(note.id), { method: 'DELETE' })
+      notes.map((note) =>
+        apiRequest(NOTES_ENDPOINTS.delete(note.id), { method: "DELETE" })
       )
     );
     return;
@@ -279,6 +296,5 @@ export const clearVideoNotes = async (videoId) => {
   delete allNotes[videoId];
   saveLocalNotes(allNotes);
 };
-
 
 export default useVideoNotes;

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { videos as mockVideos, chapters as mockChapters } from "../data/mockData.js";
-import { apiRequest, API_CONFIG } from "../config/api.js";
+import { apiRequest } from "../config/api.js";
 
 // Icons (unchanged)
 const PlayIcon = () => (
@@ -35,26 +34,22 @@ const ContinueWatching = ({ history, onRemove }) => {
   const [chapters, setChapters] = useState([]);
 
   // 🔧 FIX: Load from API in real mode
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        if (API_CONFIG.useMock) {
-          setVideos(mockVideos);
-          setChapters(mockChapters);
-        } else {
-          const v = await apiRequest("/content/videos/");
-          const ch = await apiRequest("/content/chapters/");
-          setVideos(v || []);
-          setChapters(ch || []);
-        }
-      } catch {
-        setVideos([]);
-        setChapters([]);
-      }
-    };
+ useEffect(() => {
+  const loadData = async () => {
+    try {
+      const v = await apiRequest("/content/videos/");
+      const ch = await apiRequest("/content/chapters/");
+      setVideos(v || []);
+      setChapters(ch || []);
+    } catch {
+      setVideos([]);
+      setChapters([]);
+    }
+  };
 
-    loadData();
-  }, []);
+  loadData();
+}, []);
+
 
   const continueWatchingItems = history.slice(0, 6);
   if (continueWatchingItems.length === 0) return null;

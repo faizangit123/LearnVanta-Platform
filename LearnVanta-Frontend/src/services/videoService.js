@@ -2,80 +2,72 @@
  * Video Service Layer
  * 
  * Handles watch history, favorites, and progress tracking.
- * Uses mock localStorage when API_CONFIG.useMock is true,
- * otherwise calls Django REST API.
+ * Uses real Django REST API.
  */
 
-import { API_CONFIG, apiRequest, mockDelay } from "../config/api.js";
+import { apiRequest } from "../config/api.js";
 
-// Mock storage keys
-const WATCH_HISTORY_KEY = 'video_watch_history';
-const FAVORITES_KEY = 'video_favorites';
-const WATCH_PROGRESS_KEY = 'video_watch_progress';
+// ============================================
+// NORMALIZERS
+// ============================================
+
+const normalizeHistory = (item) => ({
+  id: item.id,
+  videoId: item.video?.id,
+  title: item.video?.title,
+  thumbnail: item.video?.thumbnail,
+  duration: item.video?.duration,
+  chapterName: item.video?.chapter?.name,
+  watchedAt: item.watched_at,
+  progress: item.progress_percentage ?? 0,
+});
+
+const normalizeProgress = (data) => ({
+  currentTime: data.current_time ?? 0,
+  duration: data.duration ?? 0,
+  percentage: data.percentage ?? 0,
+});
+
+const normalizeFavorite = (item) => ({
+  id: item.id,
+  videoId: item.video?.id,
+  title: item.video?.title,
+  thumbnail: item.video?.thumbnail,
+  duration: item.video?.duration,
+  chapterName: item.video?.chapter?.name,
+  addedAt: item.added_at,
+});
 
 // ============================================
 // WATCH HISTORY
 // ============================================
 
 export const getWatchHistory = async () => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest("/user/history/");
-  }
-
-  await mockDelay();
-  const history = localStorage.getItem(WATCH_HISTORY_KEY);
-  return history ? JSON.parse(history) : [];
+  const data = await apiRequest("/user/history/");
+  return (data || []).map(normalizeHistory);
 };
 
 export const addToWatchHistory = async (video) => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest("/user/history/", {
-      method: 'POST',
-      body: JSON.stringify({
-        videoId: video.id,
-      }),
-    });
-  }
+  const data = await apiRequest("/user/history/", {
+    method: "POST",
+    body: JSON.stringify({
+      video_id: video.id,   // correct key
+    }),
+  });
 
-  await mockDelay();
-  const history = await getWatchHistory();
-  
-  const filtered = history.filter(item => item.videoId !== video.id);
-  
-  const historyItem = {
-    videoId: video.id,
-    title: video.title,
-    thumbnail: video.thumbnail,
-    duration: video.duration,
-    chapterName: video.chapterName,
-    watchedAt: new Date().toISOString(),
-    progress: 0
-  };
-  
-  const updated = [historyItem, ...filtered].slice(0, 50);
-  localStorage.setItem(WATCH_HISTORY_KEY, JSON.stringify(updated));
-  return updated;
+  return (data || []).map(normalizeHistory);
 };
 
 export const removeFromWatchHistory = async (videoId) => {
-  if (!API_CONFIG.useMock) {
-    await apiRequest(`/user/history/${videoId}/`, {
-      method: 'DELETE',
-    });
-    return getWatchHistory();
-  }
+  await apiRequest(`/user/history/${videoId}/`, {
+    method: "DELETE",
+  });
 
-  await mockDelay();
-  const history = await getWatchHistory();
-  const updated = history.filter(item => item.videoId !== videoId);
-  localStorage.setItem(WATCH_HISTORY_KEY, JSON.stringify(updated));
-  return updated;
+  return getWatchHistory();
 };
 
-// i will add clear endpoint in backend later
 export const clearWatchHistory = async () => {
-  await mockDelay();
-  localStorage.removeItem(WATCH_HISTORY_KEY);
+  // backend doesn't have bulk delete yet
   return [];
 };
 
@@ -84,56 +76,24 @@ export const clearWatchHistory = async () => {
 // ============================================
 
 export const getWatchProgress = async (videoId) => {
-  if (!API_CONFIG.useMock) {
-    try {
-      return await apiRequest(`/user/progress/${videoId}/`);
-    } catch {
-      return { currentTime: 0, duration: 0, percentage: 0 };
-    }
+  try {
+    const data = await apiRequest(`/user/progress/${videoId}/`);
+    return normalizeProgress(data);
+  } catch {
+    return { currentTime: 0, duration: 0, percentage: 0 };
   }
-
-  await mockDelay();
-  const progress = localStorage.getItem(WATCH_PROGRESS_KEY);
-  const allProgress = progress ? JSON.parse(progress) : {};
-  return allProgress[videoId] || { currentTime: 0, duration: 0, percentage: 0 };
 };
 
 export const updateWatchProgress = async (videoId, currentTime, duration) => {
-  const progressData = {
-    currentTime,
-    duration,
-    percentage: duration > 0 ? Math.round((currentTime / duration) * 100) : 0,
-  };
+  const data = await apiRequest(`/user/progress/${videoId}/`, {
+    method: "POST",
+    body: JSON.stringify({
+      current_time: currentTime,   //  correct key
+      duration: duration,
+    }),
+  });
 
-  if (!API_CONFIG.useMock) {
-    return apiRequest(`/user/progress/${videoId}/`, {
-      method: 'POST',
-      body: JSON.stringify({
-        currentTime,
-        duration,
-      }),
-    });
-  }
-
-  await mockDelay();
-  const progress = localStorage.getItem(WATCH_PROGRESS_KEY);
-  const allProgress = progress ? JSON.parse(progress) : {};
-  
-  allProgress[videoId] = {
-    ...progressData,
-    updatedAt: new Date().toISOString()
-  };
-  
-  localStorage.setItem(WATCH_PROGRESS_KEY, JSON.stringify(allProgress));
-  
-  const history = await getWatchHistory();
-  const historyItem = history.find(item => item.videoId === videoId);
-  if (historyItem) {
-    historyItem.progress = allProgress[videoId].percentage;
-    localStorage.setItem(WATCH_HISTORY_KEY, JSON.stringify(history));
-  }
-  
-  return allProgress[videoId];
+  return normalizeProgress(data);
 };
 
 // ============================================
@@ -141,78 +101,28 @@ export const updateWatchProgress = async (videoId, currentTime, duration) => {
 // ============================================
 
 export const getFavorites = async () => {
-  if (!API_CONFIG.useMock) {
-    return apiRequest("/user/favorites/");
-  }
-
-  await mockDelay();
-  const favorites = localStorage.getItem(FAVORITES_KEY);
-  return favorites ? JSON.parse(favorites) : [];
-};
-
-export const addToFavorites = async (video) => {
-  if (!API_CONFIG.useMock) {
-    return toggleFavorite(video); 
-  }
-
-  await mockDelay();
-  const favorites = await getFavorites();
-  
-  if (favorites.some(item => item.videoId === video.id)) {
-    return favorites;
-  }
-  
-  const favoriteItem = {
-    videoId: video.id,
-    title: video.title,
-    thumbnail: video.thumbnail,
-    duration: video.duration,
-    chapterName: video.chapterName,
-    addedAt: new Date().toISOString()
-  };
-  
-  const updated = [favoriteItem, ...favorites];
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-  return updated;
-};
-
-export const removeFromFavorites = async (videoId) => {
-  if (!API_CONFIG.useMock) {
-    await apiRequest(`/user/favorites/${videoId}/toggle/`, {
-      method: 'POST',
-    });
-    return getFavorites();
-  }
-
-  await mockDelay();
-  const favorites = await getFavorites();
-  const updated = favorites.filter(item => item.videoId !== videoId);
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-  return updated;
-};
-
-export const isFavorite = async (videoId) => {
-  const favorites = await getFavorites();
-  return favorites.some(item =>
-    item.video_id === videoId || item.videoId === videoId
-  );
+  const data = await apiRequest("/user/favorites/");
+  return (data || []).map(normalizeFavorite);
 };
 
 export const toggleFavorite = async (video) => {
-  if (!API_CONFIG.useMock) {
-    const favorites = await apiRequest(`/user/favorites/${video.id}/toggle/`, {
-      method: 'POST',
-    });
-const isFav = favorites.some(f => f.video_id === video.id);
-return { favorites, isFavorite: isFav };
+  const data = await apiRequest(
+    `/user/favorites/${video.id}/toggle/`,
+    { method: "POST" }
+  );
 
-  }
-
-  const isCurrentlyFavorite = (await getFavorites())
-    .some(item => item.videoId === video.id);
-  if (isCurrentlyFavorite) {
-    return { favorites: await removeFromFavorites(video.id), isFavorite: false };
-  } else {
-    return { favorites: await addToFavorites(video), isFavorite: true };
-  }
+  return (data || []).map(normalizeFavorite);
 };
+
+export const addToFavorites = async (video) => {
+  return toggleFavorite(video);
+};
+
+export const removeFromFavorites = async (videoId) => {
+  await apiRequest(`/user/favorites/${videoId}/toggle/`, {
+    method: "POST",
+  });
+
+  return getFavorites();
+};
+

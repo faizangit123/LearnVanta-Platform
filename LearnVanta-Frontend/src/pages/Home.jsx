@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "../components/layout/index.js";
-import { classes, testimonials, getTrendingVideos, getRecentVideos, formatViews, formatDate } from "../data/mockData.js";
 import { useWatchHistory } from "../hooks/useWatchHistory.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { apiRequest } from "../config/api";
 
 // Icons
 const PlayIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
@@ -19,11 +19,43 @@ const HistoryIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" hei
 const SparklesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>;
 const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>;
 
+
+const formatViews = (num) => {
+  if (!num) return "0";
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString();
+};
+
 const Home = () => {
-  const trendingVideos = getTrendingVideos();
-  const recentVideos = getRecentVideos();
+  const [classes, setClasses] = useState([]);
+  const [recentVideos, setRecentVideos] = useState([]);
+  const [trendingVideos, setTrendingVideos] = useState([]);
   const { history, isLoading: historyLoading } = useWatchHistory();
   const { isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+  Promise.all([
+    apiRequest("/content/classes/"),
+    apiRequest("/content/videos/?ordering=-published_at"),
+    apiRequest("/content/videos/?ordering=-views"),
+  ])
+    .then(([classesData, recentData, trendingData]) => {
+      setClasses(classesData || []);
+      setRecentVideos(recentData || []);
+      setTrendingVideos(trendingData || []);
+    })
+    .catch(() => {
+      setClasses([]);
+      setRecentVideos([]);
+      setTrendingVideos([]);
+    });
+}, []);
 
   const styles = {
     iconWrapper: {

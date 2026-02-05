@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useWatchHistory } from '../hooks/useWatchHistory';
 import { MainLayout } from '../components/layout';
-import { videos as allVideos, chapters } from '../data/mockData';
 
 // Icons
 const ClockIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>;
@@ -48,7 +47,10 @@ const VideoCardSkeleton = () => (
   </div>
 );
 
-// Helper to group history by time period
+// ============================================
+// GROUP BY TIME (uses backend watchedAt)
+// ============================================
+
 const groupHistoryByTime = (history) => {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

@@ -62,7 +62,7 @@ class Note(models.Model):
     )
     video = models.ForeignKey('content.Video', on_delete=models.CASCADE)
     content = models.TextField()
-    timestamp = models.FloatField(null=True, blank=True)
+    timestamp = models.IntegerField(null=True, blank=True)
     is_pinned = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

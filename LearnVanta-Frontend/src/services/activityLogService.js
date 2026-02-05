@@ -11,7 +11,10 @@ import { API_CONFIG, apiRequest } from "../config/api.js";
 const ACTIVITY_LOG_KEY = "edustream_activity_logs";
 const MAX_LOGS = 100;
 
-// Activity types
+// ============================================
+// Activity Types (must match Django)
+// ============================================
+
 export const ACTIVITY_TYPES = {
   USER_REGISTERED: "user_registered",
   USER_LOGIN: "user_login",
@@ -23,7 +26,10 @@ export const ACTIVITY_TYPES = {
   PROFILE_UPDATED: "profile_updated",
 };
 
-// Get activity icon and color based on type
+// ============================================
+// UI Meta (icons / labels)
+// ============================================
+
 export const getActivityMeta = (type) => {
   switch (type) {
     case ACTIVITY_TYPES.USER_REGISTERED:
@@ -48,12 +54,16 @@ export const getActivityMeta = (type) => {
 };
 
 // ============================================
-// LOCAL STORAGE HELPERS
+// LOCAL STORAGE HELPERS (mock only)
 // ============================================
 
 const getLocalLogs = () => {
-  const stored = localStorage.getItem(ACTIVITY_LOG_KEY);
-  return stored ? JSON.parse(stored) : [];
+  try {
+    const stored = localStorage.getItem(ACTIVITY_LOG_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
 };
 
 const saveLocalLogs = (logs) => {
@@ -61,19 +71,27 @@ const saveLocalLogs = (logs) => {
 };
 
 // ============================================
-// LOG OPERATIONS
+// READ LOGS
 // ============================================
 
 export const getActivityLogs = async () => {
   if (!API_CONFIG.useMock) {
-    // backend already limits to 100
+    // Django: GET /activities/
     return apiRequest("/activities/");
   }
+
   return getLocalLogs();
 };
 
+// ============================================
+// CREATE LOG
+// ============================================
+
 export const logActivity = (type, details = {}) => {
+  if (!type) return;
+
   if (!API_CONFIG.useMock) {
+    // Django: POST /activities/create/
     apiRequest("/activities/create/", {
       method: "POST",
       body: JSON.stringify({ type, details }),
@@ -81,10 +99,11 @@ export const logActivity = (type, details = {}) => {
     return;
   }
 
+  // Mock fallback
   const logs = getLocalLogs();
 
   const newLog = {
-    id: "log_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9),
+    id: "log_" + Date.now() + "_" + Math.random().toString(36).slice(2),
     type,
     details,
     timestamp: new Date().toISOString(),
@@ -95,6 +114,10 @@ export const logActivity = (type, details = {}) => {
 
   return newLog;
 };
+
+// ============================================
+// FILTERED READS
+// ============================================
 
 export const getRecentActivities = async (limit = 20) => {
   const logs = await getActivityLogs();
@@ -113,17 +136,25 @@ export const getUserActivities = async (userId, limit = 20) => {
     .slice(0, limit);
 };
 
+// ============================================
+// CLEAR LOGS (admin only)
+// ============================================
 
 export const clearActivityLogs = async () => {
   if (!API_CONFIG.useMock) {
+    // Django: DELETE /activities/clear/
     return apiRequest("/activities/clear/", {
-      method: "DELETE",   
+      method: "DELETE",
     });
   }
 
   localStorage.removeItem(ACTIVITY_LOG_KEY);
   return { success: true };
 };
+
+// ============================================
+// STATS
+// ============================================
 
 export const getActivityStats = async () => {
   const logs = await getActivityLogs();

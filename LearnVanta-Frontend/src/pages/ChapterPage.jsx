@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { MainLayout } from "../components/layout";
-import {
-  getChapterById,
-  getSubjectById,
-  getClassById,
-  getVideosByChapter,
-  formatViews,
-  formatDate,
-} from "../data/mockData";
-import { getResourcesByChapter, isMockMode } from "../services/resourceService";
+import { getResourcesByChapter } from "../services/resourceService";
+import { isMockMode } from "../config/api";
+import { apiRequest } from "../config/api";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useAuthPrompt } from "../context/AuthPromptContext.jsx";
 
@@ -98,7 +92,7 @@ const FunctionIcon = () => (
 
 // Resource Card Component
 const ResourceCard = ({ resource, type, icon, title, description, isAuthenticated, showLoginPrompt }) => {
-  const isMock = resource?.isMock;
+  const isMock = !resource?.url;
   const url = resource?.url;
   const size = resource?.size;
   
@@ -147,15 +141,44 @@ const ResourceCard = ({ resource, type, icon, title, description, isAuthenticate
   );
 };
 
+const formatViews = (num) => {
+  if (!num) return "0";
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+  return num.toString();
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString();
+};
+
 const ChapterPage = () => {
   const { chapterId } = useParams();
   const { isAuthenticated } = useAuth();
   const { showLoginPrompt } = useAuthPrompt();
   
-  const chapter = getChapterById(chapterId);
-  const subject = chapter ? getSubjectById(chapter.subjectId) : null;
-  const classData = subject ? getClassById(subject.classId) : null;
-  const videos = chapter ? getVideosByChapter(chapterId) : [];
+  const [chapter, setChapter] = useState(null);
+const [subject, setSubject] = useState(null);
+const [classData, setClassData] = useState(null);
+const [videos, setVideos] = useState([]);
+
+useEffect(() => {
+  Promise.all([
+    apiRequest(`/content/chapters/${chapterId}/`),
+    apiRequest(`/content/videos/chapter/${chapterId}/`),
+  ])
+    .then(([chapterData, videosData]) => {
+      setChapter(chapterData);
+      setSubject(chapterData.subject || null);
+      setClassData(chapterData.subject?.class_ref || null);
+      setVideos(videosData || []);
+    })
+    .catch(() => {
+      setChapter(null);
+    });
+}, [chapterId]);
+
   
   // Resources state - fetched from resource service
   const [resources, setResources] = useState({ notes: null, practice: null, formulas: null });
@@ -177,7 +200,7 @@ const ChapterPage = () => {
     loadResources();
   }, [chapterId]);
   
-  const totalViews = videos.reduce((acc, v) => acc + v.views, 0);
+  const totalViews = videos.reduce((acc, v) => acc + (v.views || 0), 0);
   
   // Check if any resources exist (either from service or embedded in chapter)
   const hasResources = resources.notes || resources.practice || resources.formulas || chapter?.resources;
@@ -360,7 +383,7 @@ const ChapterPage = () => {
                       </span>
                       <span className="chapter-video-stat">
                         <CalendarIcon />
-                        {formatDate(video.publishedAt)}
+                        {formatDate(video.published_at)}
                       </span>
                     </div>
                   </div>

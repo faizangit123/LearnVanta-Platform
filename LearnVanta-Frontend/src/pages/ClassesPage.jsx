@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { apiRequest } from "../config/api";
 import { Link } from "react-router-dom";
 import { MainLayout } from "../components/layout";
-import { classes, subjects } from "../data/mockData";
 
 // Icons
 const GraduationCapIcon = () => (
@@ -59,16 +59,35 @@ const getColorClass = (color) => {
 };
 
 const ClassesPage = () => {
+   const [classes, setClasses] = useState([]);
+   const [subjects, setSubjects] = useState([]);
+   
+   useEffect(() => {
+    Promise.all([
+    apiRequest("/content/classes/"),
+    apiRequest("/content/subjects/"),
+  ])
+    .then(([classesData, subjectsData]) => {
+      setClasses(classesData || []);
+      setSubjects(subjectsData || []);
+    })
+    .catch(() => {
+      setClasses([]);
+      setSubjects([]);
+    });
+}, []);
+
+
   // Get subject count for each class
   const getSubjectCount = (classId) => {
-    return subjects.filter(s => s.classId === classId).length;
-  };
+  return subjects.filter(s => s.class_ref?.id === classId).length;
+};
 
-  // Get total video count for a class
+// Get total video count for a class
   const getVideoCount = (classId) => {
-    return subjects
-      .filter(s => s.classId === classId)
-      .reduce((total, s) => total + s.videoCount, 0);
+  return subjects
+    .filter(s => s.class_ref?.id === classId)
+    .reduce((total, s) => total + (s.video_count || 0), 0);
   };
 
   return (
@@ -101,7 +120,7 @@ const ClassesPage = () => {
                   <div className={`class-card-badge ${classItem.color}`}>
                     {classItem.grade === "UG/PG" ? "University" : `Grade ${classItem.grade}`}
                   </div>
-                  {classItem.id === "class-10" || classItem.id === "class-12" ? (
+                  {classItem.grade === 10 || classItem.grade === 12 ? (
                     <span className="class-card-popular">
                       <StarIcon /> Popular
                     </span>
@@ -122,7 +141,7 @@ const ClassesPage = () => {
                   </div>
                   <div className="class-stat">
                     <UsersIcon />
-                    <span>{classItem.studentCount.toLocaleString()} Students</span>
+                    <span>{classItem.student_count?.toLocaleString() || "0"} Students</span>
                   </div>
                 </div>
 

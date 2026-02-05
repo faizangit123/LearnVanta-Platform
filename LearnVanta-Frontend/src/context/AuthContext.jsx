@@ -2,21 +2,32 @@
  * AuthContext - Provides authentication state globally
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { 
-  loginUser, 
-  registerUser, 
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+
+import {
+  loginUser,
+  registerUser,
   logoutUser,
   isAdmin as checkIsAdmin,
 } from "../services/authService.js";
-import { 
-  API_CONFIG, 
-  getAuthToken, 
+
+import {
+  getAuthToken,
   clearAllTokens,
-  apiRequest
+  apiRequest,
 } from "../config/api.js";
 
 const AuthContext = createContext(undefined);
+
+// ============================================
+// HOOK
+// ============================================
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -26,44 +37,60 @@ export const useAuth = () => {
   return context;
 };
 
+// ============================================
+// PROVIDER
+// ============================================
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  
-// Validate token on mount
-useEffect(() => {
-  const initAuth = async () => {
-    try {
-      const token = getAuthToken();
+  // ============================================
+  // INIT AUTH (ON APP LOAD)
+  // ============================================
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const token = getAuthToken();
 
-      if (!token) {
+        // No token → not logged in
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
+        // Validate token via backend
+        const userData = await apiRequest("/auth/profile/");
+
+        // DO NOT mutate backend fields
+        // Backend already gives: is_admin, is_staff, etc
+
+        // setUser(userData);
+        // localStorage.setItem("edustream_user", JSON.stringify(userData));
+        const normalizedUser = {...userData,
+          name: userData.first_name || userData.username || userData.email,
+          isAdmin: userData.is_admin ?? userData.is_staff ?? userData.is_superuser ?? false,
+        };
+        setUser(normalizedUser);
+        localStorage.setItem("edustream_user",JSON.stringify(normalizedUser));
+      } catch (e) {
+        console.error("Auth init error:", e);
+
+        // Hard reset on any auth failure
         setUser(null);
-        return;
+        clearAllTokens();
+        localStorage.removeItem("edustream_user");
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      const userData = await apiRequest("/auth/profile/");
+    initAuth();
+  }, []);
 
-      
-      userData.isAdmin = userData.is_admin; 
-
-      setUser(userData);
-      localStorage.setItem("edustream_user", JSON.stringify(userData));
-    } catch (e) {
-      console.error("Auth init error:", e);
-      setUser(null);
-      clearAllTokens();
-      localStorage.removeItem("edustream_user");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  initAuth();
-}, []);
-
-
-  // Login
+  // ============================================
+  // LOGIN
+  // ============================================
   const login = useCallback(async (email, password) => {
     const userData = await loginUser(email, password);
     setUser(userData);
@@ -71,33 +98,46 @@ useEffect(() => {
     return userData;
   }, []);
 
-  // Signup
+  // ============================================
+  // SIGNUP
+  // ============================================
   const signup = useCallback(async (name, email, password) => {
     const userData = await registerUser(name, email, password);
+
     if (!userData.verificationPending) {
       setUser(userData);
       localStorage.setItem("edustream_user", JSON.stringify(userData));
     }
+
     return userData;
   }, []);
 
-  // Logout
+  // ============================================
+  // LOGOUT
+  // ============================================
   const logout = useCallback(async () => {
     try {
       await logoutUser();
-    } catch {}
+    } catch {
+      // ignore network errors
+    }
+
     setUser(null);
-    localStorage.removeItem("edustream_user");
     clearAllTokens();
+    localStorage.removeItem("edustream_user");
   }, []);
 
-  // Update user
+  // ============================================
+  // UPDATE USER (PROFILE)
+  // ============================================
   const updateUser = useCallback((updatedUser) => {
     setUser(updatedUser);
     localStorage.setItem("edustream_user", JSON.stringify(updatedUser));
   }, []);
 
-  // REAL admin check (Django flags)
+  // ============================================
+  // ADMIN CHECK (REAL)
+  // ============================================
   const isAdmin = checkIsAdmin(user);
 
   const value = {
@@ -111,10 +151,16 @@ useEffect(() => {
     updateUser,
   };
 
-  // THIS PREVENTS WHITE SCREENS
+  // ============================================
+  // PREVENT WHITE SCREEN
+  // ============================================
   if (isLoading) return null;
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthContext;

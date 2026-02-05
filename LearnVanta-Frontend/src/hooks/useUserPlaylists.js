@@ -1,19 +1,21 @@
 /**
  * Personal User Playlists Hook
- * 
- * Manages user-created playlists with localStorage (mock mode)
- * or Django API calls (real mode).
+ *
+ * Manages user-created playlists using Django REST API.
+ * Mock code is kept only for non-critical UI helpers.
+ * Production always uses real backend.
  */
 
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-import { API_CONFIG, API_ENDPOINTS, apiRequest } from "../config/api.js";
-import { getVideoById } from "../data/mockData.js";
+import { API_ENDPOINTS, apiRequest } from "../config/api.js";
+// Only used for UI preview, not data source
 
-const USER_PLAYLISTS_KEY = "edustream_user_playlists";
+// ============================================
+// SAFE ENDPOINT FALLBACK (CRITICAL FIX)
+// ============================================
+// This prevents: "Cannot read properties of undefined (reading 'list')"
 
-
-/* ADDED: safe endpoint fallback (prevents undefined crash) */
 const USER_PLAYLIST_ENDPOINTS = {
   list: API_ENDPOINTS?.userPlaylists?.list || "/user/playlists/",
   detail: (id) =>
@@ -35,35 +37,27 @@ const USER_PLAYLIST_ENDPOINTS = {
 };
 
 // ============================================
-// LOCAL STORAGE HELPERS
+// NORMALIZER (DO NOT REMOVE THIS EVER)
 // ============================================
-
-const getLocalPlaylists = (userId) => {
-  try {
-    const key = `${USER_PLAYLISTS_KEY}_${userId}`;
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveLocalPlaylists = (userId, playlists) => {
-  const key = `${USER_PLAYLISTS_KEY}_${userId}`;
-  localStorage.setItem(key, JSON.stringify(playlists));
-};
-
-// ============================================
-// Normalizer
-// ============================================
+// This is what makes frontend immune to backend changes
 
 const normalizePlaylist = (playlist) => ({
   id: playlist.id,
   name: playlist.name || playlist.title,
   description: playlist.description || "",
-  videoIds: playlist.videoIds || playlist.video_ids || [],
-  createdAt: playlist.createdAt || playlist.created_at || new Date().toISOString(),
-  updatedAt: playlist.updatedAt || playlist.updated_at || new Date().toISOString(),
+  videoIds: Array.isArray(playlist.videoIds)
+  ? playlist.videoIds
+  : Array.isArray(playlist.video_ids)
+  ? playlist.video_ids
+  : [],
+  createdAt:
+    playlist.createdAt ||
+    playlist.created_at ||
+    new Date().toISOString(),
+  updatedAt:
+    playlist.updatedAt ||
+    playlist.updated_at ||
+    new Date().toISOString(),
 });
 
 // ============================================
@@ -72,233 +66,206 @@ const normalizePlaylist = (playlist) => ({
 
 export const useUserPlaylists = () => {
   const { user, isAuthenticated } = useAuth();
+
   const [playlists, setPlaylists] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-   // Load playlists
+  // ============================================
+  // LOAD PLAYLISTS
+  // ============================================
+  // FIXES:
+  // - 401 spam when logged out
+  // - infinite errors on home page
+  // - API calls without token
+
   const loadPlaylists = useCallback(async () => {
-    /* never call API if logged out */
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated) {
       setPlaylists([]);
-      setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
-      if (!API_CONFIG.useMock) {
-        const data = await apiRequest(USER_PLAYLIST_ENDPOINTS.list);
-        const normalized = (data || []).map(normalizePlaylist);
-        setPlaylists(normalized);
-      } else {
-        setPlaylists(getLocalPlaylists(user.id));
-      }
+      const data = await apiRequest(USER_PLAYLIST_ENDPOINTS.list);
+      const normalized = (data || []).map(normalizePlaylist);
+      setPlaylists(normalized);
     } catch (error) {
       console.error("Failed to load user playlists:", error);
       setPlaylists([]);
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, isAuthenticated]);
+  }, [isAuthenticated]);
 
-  // Load on mount and when user changes
+
   useEffect(() => {
     loadPlaylists();
   }, [loadPlaylists]);
 
-  // Save to localStorage (mock mode)
-  const savePlaylists = useCallback((updatedPlaylists) => {
-    if (!user?.id) return;
-    if (API_CONFIG.useMock) {
-      saveLocalPlaylists(user.id, updatedPlaylists);
-    }
-    setPlaylists(updatedPlaylists);
-  }, [user?.id]);
+  // ============================================
+  // CREATE PLAYLIST
+  // ============================================
 
-  // Create a new playlist
-  const createPlaylist = useCallback(async (name, description = "") => {
-    if (!isAuthenticated || !name?.trim()) return null;
+  const createPlaylist = useCallback(
+    async (name, description = "") => {
+      if (!isAuthenticated || !name?.trim()) return null;
 
-    if (!API_CONFIG.useMock) {
-      const newPlaylist = await apiRequest(API_ENDPOINTS.userPlaylists.list, {
-        method: 'POST',
-        body: JSON.stringify({ name: name.trim(), description: description.trim() }),
-      });
+      const newPlaylist = await apiRequest(
+        USER_PLAYLIST_ENDPOINTS.list,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            name: name.trim(),
+            description: description.trim(),
+          }),
+        }
+      );
+
       const normalized = normalizePlaylist(newPlaylist);
-      setPlaylists(prev => [normalized, ...prev]);
+      setPlaylists((prev) => [normalized, ...prev]);
       return normalized;
-    }
+    },
+    [isAuthenticated]
+  );
 
-    // Mock implementation
-    const newPlaylist = {
-      id: `upl-${Date.now()}`,
-      name: name.trim(),
-      description: description.trim(),
-      videoIds: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  // ============================================
+  // UPDATE PLAYLIST
+  // ============================================
 
-    const updated = [newPlaylist, ...playlists];
-    savePlaylists(updated);
-    return newPlaylist;
-  }, [isAuthenticated, playlists, savePlaylists]);
+  const updatePlaylist = useCallback(
+    async (playlistId, updates) => {
+      if (!isAuthenticated) return null;
 
-  // Update playlist details
-  const updatePlaylist = useCallback(async (playlistId, updates) => {
-    if (!isAuthenticated) return null;
-    if (!API_CONFIG.useMock) {
-      const updated = await apiRequest(USER_PLAYLIST_ENDPOINTS.detail(playlistId), {
-        method: 'PATCH',
-        body: JSON.stringify(updates),
-      });
+      const updated = await apiRequest(
+        USER_PLAYLIST_ENDPOINTS.detail(playlistId),
+        {
+          method: "PATCH",
+          body: JSON.stringify(updates),
+        }
+      );
+
       const normalized = normalizePlaylist(updated);
-      setPlaylists(prev => prev.map(p => p.id === playlistId ? normalized : p));
+      setPlaylists((prev) =>
+        prev.map((p) => (p.id === playlistId ? normalized : p))
+      );
       return normalized;
-    }
+    },
+    [isAuthenticated]
+  );
 
-    const index = playlists.findIndex(p => p.id === playlistId);
-    if (index === -1) return null;
+  // ============================================
+  // DELETE PLAYLIST
+  // ============================================
 
-    const updatedPlaylist = {
-      ...playlists[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
+  const deletePlaylist = useCallback(
+    async (playlistId) => {
+      if (!isAuthenticated) return false;
 
-    const updated = [...playlists];
-    updated[index] = updatedPlaylist;
-    savePlaylists(updated);
-    return updatedPlaylist;
-  }, [playlists, savePlaylists, isAuthenticated]);
+      await apiRequest(
+        USER_PLAYLIST_ENDPOINTS.detail(playlistId),
+        { method: "DELETE" }
+      );
 
-  // Delete a playlist
-  const deletePlaylist = useCallback(async (playlistId) => {
-    if (!isAuthenticated) return false;
-    if (!API_CONFIG.useMock) {
-      await apiRequest(USER_PLAYLIST_ENDPOINTS.detail(playlistId), {
-        method: 'DELETE',
-      });
-      setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+      setPlaylists((prev) =>
+        prev.filter((p) => p.id !== playlistId)
+      );
       return true;
-    }
+    },
+    [isAuthenticated]
+  );
 
-    const updated = playlists.filter(p => p.id !== playlistId);
-    savePlaylists(updated);
-    return true;
-  }, [playlists, savePlaylists, isAuthenticated]);
+  // ============================================
+  // ADD VIDEO
+  // ============================================
 
-  // Add video to playlist
-  const addVideoToPlaylist = useCallback(async (playlistId, videoId) => {
-    if (!isAuthenticated) return false;
+  const addVideoToPlaylist = useCallback(
+    async (playlistId, videoId) => {
+      if (!isAuthenticated) return false;
 
-    if (!API_CONFIG.useMock) {
-      await apiRequest(USER_PLAYLIST_ENDPOINTS.addVideo(playlistId), {
-        method: 'POST',
-        body: JSON.stringify({ video_id: videoId }),
-      });
+      await apiRequest(
+        USER_PLAYLIST_ENDPOINTS.addVideo(playlistId),
+        {
+          method: "POST",
+          body: JSON.stringify({ video_id: videoId }),
+        }
+      );
+
       await loadPlaylists();
       return true;
-    }
+    },
+    [loadPlaylists, isAuthenticated]
+  );
 
-    const index = playlists.findIndex(p => p.id === playlistId);
-    if (index === -1) return false;
+  // ============================================
+  // REMOVE VIDEO
+  // ============================================
 
-    const playlist = playlists[index];
-    if (playlist.videoIds.includes(videoId)) return true;
+  const removeVideoFromPlaylist = useCallback(
+    async (playlistId, videoId) => {
+      if (!isAuthenticated) return false;
 
-    const updatedPlaylist = {
-      ...playlist,
-      videoIds: [...playlist.videoIds, videoId],
-      updatedAt: new Date().toISOString(),
-    };
+      await apiRequest(
+        USER_PLAYLIST_ENDPOINTS.removeVideo(playlistId),
+        {
+          method: "POST",
+          body: JSON.stringify({ video_id: videoId }),
+        }
+      );
 
-    const updated = [...playlists];
-    updated[index] = updatedPlaylist;
-    savePlaylists(updated);
-    return true;
-  }, [playlists, savePlaylists, loadPlaylists, isAuthenticated]);
-
-  // Remove video from playlist
-  const removeVideoFromPlaylist = useCallback(async (playlistId, videoId) => {
-    if (!isAuthenticated) return false;
-    if (!API_CONFIG.useMock) {
-      await apiRequest(USER_PLAYLIST_ENDPOINTS.removeVideo(playlistId), {
-        method: 'POST',
-        body: JSON.stringify({ video_id: videoId }),
-      });
       await loadPlaylists();
       return true;
-    }
+    },
+    [loadPlaylists, isAuthenticated]
+  );
 
-    const index = playlists.findIndex(p => p.id === playlistId);
-    if (index === -1) return false;
+  // ============================================
+  // REORDER
+  // ============================================
 
-    const updatedPlaylist = {
-      ...playlists[index],
-      videoIds: playlists[index].videoIds.filter(id => id !== videoId),
-      updatedAt: new Date().toISOString(),
-    };
+  const reorderVideos = useCallback(
+    async (playlistId, newVideoIds) => {
+      if (!isAuthenticated) return false;
 
-    const updated = [...playlists];
-    updated[index] = updatedPlaylist;
-    savePlaylists(updated);
-    return true;
-  }, [playlists, savePlaylists, loadPlaylists, isAuthenticated]);
+      await apiRequest(
+        USER_PLAYLIST_ENDPOINTS.reorder(playlistId),
+        {
+          method: "POST",
+          body: JSON.stringify({ video_ids: newVideoIds }),
+        }
+      );
 
-  // // Check if video is in any playlist
-  // const isVideoInPlaylist = useCallback((playlistId, videoId) => {
-  //   const playlist = playlists.find(p => p.id === playlistId);
-  //   return playlist?.videoIds.includes(videoId) || false;
-  // }, [playlists]);
-
-  // // Get playlists containing a specific video
-  // const getPlaylistsForVideo = useCallback((videoId) => {
-  //   return playlists.filter(p => p.videoIds.includes(videoId));
-  // }, [playlists]);
-
-  // // Get playlist by ID with full video data
-  // const getPlaylistWithVideos = useCallback((playlistId) => {
-  //   const playlist = playlists.find(p => p.id === playlistId);
-  //   if (!playlist) return null;
-
-  //   const videos = playlist.videoIds
-  //     .map(id => getVideoById(id))
-  //     .filter(Boolean);
-
-  //   return {
-  //     ...playlist,
-  //     videos,
-  //     videoCount: videos.length,
-  //   };
-  // }, [playlists]);
-
-  // Reorder videos in playlist
-  const reorderVideos = useCallback(async (playlistId, newVideoIds) => {
-    if (!isAuthenticated) return false;
-    if (!API_CONFIG.useMock) {
-      await apiRequest(USER_PLAYLIST_ENDPOINTS.reorder(playlistId), {
-        method: 'POST',
-        body: JSON.stringify({ video_ids: newVideoIds }),
-      });
       await loadPlaylists();
       return true;
-    }
+    },
+    [loadPlaylists, isAuthenticated]
+  );
 
-    const index = playlists.findIndex(p => p.id === playlistId);
-    if (index === -1) return false;
+  // ============================================
+  // UI HELPERS (SAFE)
+  // ============================================
 
-    const updatedPlaylist = {
-      ...playlists[index],
-      videoIds: newVideoIds,
-      updatedAt: new Date().toISOString(),
-    };
+  const isVideoInPlaylist = (playlistId, videoId) =>
+    playlists.find((p) => p.id === playlistId)?.videoIds.includes(videoId) ||
+    false;
 
-    const updated = [...playlists];
-    updated[index] = updatedPlaylist;
-    savePlaylists(updated);
-    return true;
-  }, [playlists, savePlaylists, loadPlaylists, isAuthenticated]);
+  const getPlaylistsForVideo = (videoId) =>
+    playlists.filter((p) => p.videoIds.includes(videoId));
+
+  const getPlaylistWithVideos = (playlistId) => {
+  const playlist = playlists.find((p) => p.id === playlistId);
+  if (!playlist) return null;
+
+  return {
+    ...playlist,
+    videos: [],
+    videoCount: playlist.videoIds.length,
+  };
+};
+
+
+  // ============================================
+  // EXPORT
+  // ============================================
 
   return {
     playlists,
@@ -308,17 +275,10 @@ export const useUserPlaylists = () => {
     deletePlaylist,
     addVideoToPlaylist,
     removeVideoFromPlaylist,
-    isVideoInPlaylist: (pid, vid) =>
-      playlists.find(p => p.id === pid)?.videoIds.includes(vid) || false,
-    getPlaylistsForVideo: (vid) =>
-      playlists.filter(p => p.videoIds.includes(vid)),
-    getPlaylistWithVideos: (pid) => {
-      const playlist = playlists.find(p => p.id === pid);
-      if (!playlist) return null;
-      const videos = playlist.videoIds.map(id => getVideoById(id)).filter(Boolean);
-      return { ...playlist, videos, videoCount: videos.length };
-    },
     reorderVideos,
+    isVideoInPlaylist,
+    getPlaylistsForVideo,
+    getPlaylistWithVideos,
     refreshPlaylists: loadPlaylists,
   };
 };

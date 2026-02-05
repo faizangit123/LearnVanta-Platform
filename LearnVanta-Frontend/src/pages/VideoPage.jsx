@@ -160,12 +160,6 @@ useEffect(() => {
   const { openMiniPlayer } = useMiniPlayer();
   const isVideoFavorite = isFavorite(videoId);
 
-  // FIX: async favorite check
-  useEffect(() => {
-    if (!video) return;
-    isFavorite(video.id).then(setIsVideoFavorite);
-  }, [video]);
-
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
@@ -173,13 +167,8 @@ useEffect(() => {
   // Add to watch history when video is opened
   useEffect(() => {
     if (video && chapter) {
-      addToHistory({
-        id: video.id,
-        title: video.title,
-        thumbnail: video.thumbnail,
-        duration: video.duration,
-        chapterName: chapter.name,
-      });
+      addToHistory(video.id);
+
     }
   }, [videoId, video, chapter]);
 
@@ -198,18 +187,18 @@ useEffect(() => {
     };
   }, [currentVideoTime, progress.duration]);
 
-  const handleToggleFavorite = async () => {
-    if (video && chapter) {
-      const result = await toggleFavorite({
-        id: video.id,   
-        title: video.title,
-        thumbnail: video.thumbnail,
-        duration: video.duration,
-        chapterName: chapter.name,
-      });
-      setIsVideoFavorite(result.isFavorite);
-    }
-  };
+  // const handleToggleFavorite = async () => {
+  //   if (video && chapter) {
+  //     const result = await toggleFavorite({
+  //       id: video.id,   
+  //       title: video.title,
+  //       thumbnail: video.thumbnail,
+  //       duration: video.duration,
+  //       chapterName: chapter.name,
+  //     });
+  //     setIsVideoFavorite(result);
+  //   }
+  // };
 
   // Handle seeking to a specific time in video (for note timestamps)
   const handleSeekToTime = (timestamp) => {
@@ -237,7 +226,7 @@ useEffect(() => {
     );
   }
 
-  const videoTypeBadge = getVideoTypeBadge(video.videoType);
+  const videoTypeBadge = getVideoTypeBadge(video.video_type);
 
   return (
     <MainLayout>

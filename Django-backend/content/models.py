@@ -32,7 +32,7 @@ class Subject(models.Model):
     chapter_count = models.IntegerField(default=0)
     order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
-
+    is_primary = models.BooleanField(default=False)
     class Meta:
         db_table = 'subjects'
         ordering = ['order']
@@ -69,22 +69,33 @@ class Video(models.Model):
 
     id = models.CharField(primary_key=True, max_length=50)
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='videos')
+
     title = models.CharField(max_length=300)
     description = models.TextField(blank=True)
-    video_type = models.CharField(max_length=20, choices=VideoType.choices, default=VideoType.YOUTUBE)
+
+    video_type = models.CharField(
+        max_length=20,
+        choices=VideoType.choices,
+        default=VideoType.YOUTUBE
+    )
+
     youtube_id = models.CharField(max_length=50, blank=True)
     youtube_url = models.URLField(blank=True)
     video_url = models.URLField(blank=True)
     thumbnail = models.URLField(blank=True)
+
     duration = models.CharField(max_length=20)
+
     views = models.IntegerField(default=0)
     likes = models.IntegerField(default=0)
     tags = models.JSONField(default=list)
+
     is_trending = models.BooleanField(default=False)
     is_recent = models.BooleanField(default=True)
-    published_at = models.DateField(auto_now_add=True)
-    order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
+
+    published_at = models.DateTimeField(auto_now_add=True)
+    order = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'videos'
@@ -104,8 +115,8 @@ class Playlist(models.Model):
     description = models.TextField(blank=True)
     thumbnail = models.URLField(blank=True)
     is_public = models.BooleanField(default=True)
-    created_at = models.DateField(auto_now_add=True)
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         db_table = 'playlists'
 
