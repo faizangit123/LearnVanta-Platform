@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../config/api.js";
-import { formatViews } from "../utils/format.js"; // or keep your local function
+import { formatViews } from "./utils/format.js"; 
 
 // Icons
 const SearchIcon = () => (

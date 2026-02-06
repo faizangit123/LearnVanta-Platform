@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { formatViews } from "../utils/format";
+import { formatViews } from "./utils/format.js";
 
 
 // Icons

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { formatViews, formatDate } from "../utils/format.js";
+import { formatViews, formatDate } from "./utils/format.js";
+
 
 // Icons
 const PlayIcon = () => (

@@ -6,7 +6,10 @@
  * otherwise calls Django REST API.
  */
 
-import { API_CONFIG, apiRequest } from "../config/api.js";
+import {
+  API_CONFIG,
+  apiRequest
+} from "../config/api.js";
 
 const ACTIVITY_LOG_KEY = "edustream_activity_logs";
 const MAX_LOGS = 100;
@@ -33,23 +36,41 @@ export const ACTIVITY_TYPES = {
 export const getActivityMeta = (type) => {
   switch (type) {
     case ACTIVITY_TYPES.USER_REGISTERED:
-      return { icon: "user-plus", color: "success", label: "New Registration" };
+      return {
+        icon: "user-plus", color: "success", label: "New Registration"
+      };
     case ACTIVITY_TYPES.USER_LOGIN:
-      return { icon: "log-in", color: "primary", label: "User Login" };
+      return {
+        icon: "log-in", color: "primary", label: "User Login"
+      };
     case ACTIVITY_TYPES.ROLE_CHANGED:
-      return { icon: "shield", color: "warning", label: "Role Changed" };
+      return {
+        icon: "shield", color: "warning", label: "Role Changed"
+      };
     case ACTIVITY_TYPES.USER_DELETED:
-      return { icon: "user-x", color: "error", label: "User Deleted" };
+      return {
+        icon: "user-x", color: "error", label: "User Deleted"
+      };
     case ACTIVITY_TYPES.VIDEO_CREATED:
-      return { icon: "video-plus", color: "success", label: "Video Added" };
+      return {
+        icon: "video-plus", color: "success", label: "Video Added"
+      };
     case ACTIVITY_TYPES.VIDEO_UPDATED:
-      return { icon: "video-edit", color: "accent", label: "Video Updated" };
+      return {
+        icon: "video-edit", color: "accent", label: "Video Updated"
+      };
     case ACTIVITY_TYPES.VIDEO_DELETED:
-      return { icon: "video-x", color: "error", label: "Video Deleted" };
+      return {
+        icon: "video-x", color: "error", label: "Video Deleted"
+      };
     case ACTIVITY_TYPES.PROFILE_UPDATED:
-      return { icon: "user-edit", color: "accent", label: "Profile Updated" };
+      return {
+        icon: "user-edit", color: "accent", label: "Profile Updated"
+      };
     default:
-      return { icon: "activity", color: "muted", label: "Activity" };
+      return {
+        icon: "activity", color: "muted", label: "Activity"
+      };
   }
 };
 
@@ -75,13 +96,9 @@ const saveLocalLogs = (logs) => {
 // ============================================
 
 export const getActivityLogs = async () => {
-  if (!API_CONFIG.useMock) {
-    // Django: GET /activities/
-    return apiRequest("/activities/");
-  }
-
-  return getLocalLogs();
+  return apiRequest("/activities/");
 };
+
 
 // ============================================
 // CREATE LOG
@@ -94,7 +111,10 @@ export const logActivity = (type, details = {}) => {
     // Django: POST /activities/create/
     apiRequest("/activities/create/", {
       method: "POST",
-      body: JSON.stringify({ type, details }),
+      body: JSON.stringify({
+        type,
+        details
+      }),
     }).catch(() => {});
     return;
   }
@@ -149,7 +169,9 @@ export const clearActivityLogs = async () => {
   }
 
   localStorage.removeItem(ACTIVITY_LOG_KEY);
-  return { success: true };
+  return {
+    success: true
+  };
 };
 
 // ============================================
