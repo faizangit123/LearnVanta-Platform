@@ -43,12 +43,12 @@ const normalizeFavorite = (item) => ({
 // ============================================
 
 export const getWatchHistory = async () => {
-  const data = await apiRequest("/user/history/");
+  const data = await apiRequest("/userdata/history/");
   return (data || []).map(normalizeHistory);
 };
 
 export const addToWatchHistory = async (video) => {
-  const data = await apiRequest("/user/history/", {
+  const data = await apiRequest("/userdata/history/", {
     method: "POST",
     body: JSON.stringify({
       video_id: video.id,   // correct key
@@ -59,7 +59,7 @@ export const addToWatchHistory = async (video) => {
 };
 
 export const removeFromWatchHistory = async (videoId) => {
-  await apiRequest(`/user/history/${videoId}/`, {
+  await apiRequest(`/userdata/history/${videoId}/`, {
     method: "DELETE",
   });
 
@@ -77,7 +77,7 @@ export const clearWatchHistory = async () => {
 
 export const getWatchProgress = async (videoId) => {
   try {
-    const data = await apiRequest(`/user/progress/${videoId}/`);
+    const data = await apiRequest(`/userdata/progress/${videoId}/`);
     return normalizeProgress(data);
   } catch {
     return { currentTime: 0, duration: 0, percentage: 0 };
@@ -85,7 +85,7 @@ export const getWatchProgress = async (videoId) => {
 };
 
 export const updateWatchProgress = async (videoId, currentTime, duration) => {
-  const data = await apiRequest(`/user/progress/${videoId}/`, {
+  const data = await apiRequest(`/userdata/progress/${videoId}/`, {
     method: "POST",
     body: JSON.stringify({
       current_time: currentTime,   //  correct key
@@ -101,13 +101,13 @@ export const updateWatchProgress = async (videoId, currentTime, duration) => {
 // ============================================
 
 export const getFavorites = async () => {
-  const data = await apiRequest("/user/favorites/");
+  const data = await apiRequest("/userdata/favorites/");
   return (data || []).map(normalizeFavorite);
 };
 
 export const toggleFavorite = async (video) => {
   const data = await apiRequest(
-    `/user/favorites/${video.id}/toggle/`,
+    `/userdata/favorites/${video.id}/toggle/`,
     { method: "POST" }
   );
 
@@ -119,7 +119,7 @@ export const addToFavorites = async (video) => {
 };
 
 export const removeFromFavorites = async (videoId) => {
-  await apiRequest(`/user/favorites/${videoId}/toggle/`, {
+  await apiRequest(`/userdata/favorites/${videoId}/toggle/`, {
     method: "POST",
   });
 

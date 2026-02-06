@@ -3,7 +3,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('content', '0002_playlist_updated_at_subject_is_primary_and_more'),
+        ('content', '0001_initial'),
     ]
 
     operations = [
