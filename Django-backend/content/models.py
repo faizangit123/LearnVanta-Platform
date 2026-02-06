@@ -32,7 +32,8 @@ class Subject(models.Model):
     chapter_count = models.IntegerField(default=0)
     order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
-    is_primary = models.BooleanField(default=False)
+    is_primary = models.BooleanField(default=False, null=True)
+    _dummy_migration_trigger = models.BooleanField(default=False)
     class Meta:
         db_table = 'subjects'
         ordering = ['order']
