@@ -30,7 +30,7 @@ ALLOWED_HOSTS = [
 ]
 
 
-# Safety fallback (optional but recommended)
+# Safety fallback 
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == [""]:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
@@ -113,33 +113,22 @@ TEMPLATES = [
 ]
 
 # --------------------------------------------------
-# DATABASE CONFIGURATION 
+# DATABASE CONFIGURATION (POSTGRES – SINGLE SOURCE)
 # --------------------------------------------------
+
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if DATABASE_URL:
-    # Docker / Production (PostgreSQL)
-    DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    }
-else:
-    # Local development (SQLite)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-    
-# Build-time static safety
-if os.environ.get("COLLECTSTATIC") == "1":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "dummy.sqlite3",
-        }
-    }
-    
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
+
+DATABASES = {
+    "default": dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True  # safe for Render / production
+    )
+}
+
 
 # --------------------------------------------------
 # Custom User Model
