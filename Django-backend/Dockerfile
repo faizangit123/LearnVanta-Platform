@@ -37,17 +37,12 @@ COPY . .
 RUN mkdir -p /app/staticfiles /app/media
 
 # -----------------------------
-# Collect static files (safe at build time)
-# -----------------------------
-ENV COLLECTSTATIC=1
-RUN python manage.py collectstatic --noinput
-
-# -----------------------------
 # Start server (Render-compatible)
 # -----------------------------
 CMD sh -c "\
     python manage.py migrate && \
     python manage.py create_admin && \
+    python manage.py collectstatic --noinput && \
     gunicorn edustream_backend.wsgi:application \
     --bind 0.0.0.0:${PORT:-8000} \
     --workers 2 \
