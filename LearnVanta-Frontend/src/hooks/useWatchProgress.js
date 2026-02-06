@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import * as videoService from "../services/videoService";
-import { useAuth } from "../context/AuthContext.jsx"; // ✅ CORRECT PATH
+import { useAuth } from "../context/AuthContext.jsx"; 
 
 export const useWatchProgress = (videoId) => {
   const { isAuthenticated } = useAuth();
