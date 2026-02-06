@@ -33,7 +33,6 @@ class Subject(models.Model):
     order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     is_primary = models.BooleanField(default=False, null=True)
-    _dummy_migration_trigger = models.BooleanField(default=False)
     class Meta:
         db_table = 'subjects'
         ordering = ['order']
@@ -117,7 +116,7 @@ class Playlist(models.Model):
     thumbnail = models.URLField(blank=True)
     is_public = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         db_table = 'playlists'
 
