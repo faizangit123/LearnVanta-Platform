@@ -194,6 +194,7 @@ export const logoutUser = async () => {
       method: "POST",
     });
   } catch {}
+ 
 
   clearAllTokens();
   localStorage.removeItem("token");

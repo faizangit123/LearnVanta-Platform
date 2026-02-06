@@ -19,7 +19,7 @@ urlpatterns = [
 
     # API v1 (PUBLIC CONTRACT)
     path("api/v1/auth/", include("accounts.urls")),
-    path("api/v1/user/", include("userdata.urls")),
+    path("api/v1/userdata/", include("userdata.urls")),
     path("api/v1/content/", include("content.urls")),
     path("api/v1/resources/", include("resources.urls")),
     path("api/v1/activities/", include("activities.urls")),

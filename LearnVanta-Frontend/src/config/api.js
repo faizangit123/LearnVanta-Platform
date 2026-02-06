@@ -90,7 +90,7 @@ export const API_ENDPOINTS = {
   list: "/userdata/playlists/",
   detail: (id) => `/userdata/playlists/${id}/`,
   create: "/userdata/playlists/",
-  update: (id) => `/userdata/playlists/${id}/`,
+  // update: (id) => `/userdata/playlists/${id}/`,
   delete: (id) => `/userdata/playlists/${id}/`,
 },
 
