@@ -5,7 +5,6 @@
  * Watch Progress Hook
  * 
  * Manages video watch progress using Django API.
- * (Mock mode effectively disabled in production)
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";

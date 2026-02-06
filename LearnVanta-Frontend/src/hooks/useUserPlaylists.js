@@ -17,24 +17,13 @@ import { API_ENDPOINTS, apiRequest } from "../config/api.js";
 // This prevents: "Cannot read properties of undefined (reading 'list')"
 
 const USER_PLAYLIST_ENDPOINTS = {
-  list: API_ENDPOINTS?.userPlaylists?.list || "/user/playlists/",
-  detail: (id) =>
-    API_ENDPOINTS?.userPlaylists?.detail
-      ? API_ENDPOINTS.userPlaylists.detail(id)
-      : `/user/playlists/${id}/`,
-  addVideo: (id) =>
-    API_ENDPOINTS?.userPlaylists?.addVideo
-      ? API_ENDPOINTS.userPlaylists.addVideo(id)
-      : `/user/playlists/${id}/add-video/`,
-  removeVideo: (id) =>
-    API_ENDPOINTS?.userPlaylists?.removeVideo
-      ? API_ENDPOINTS.userPlaylists.removeVideo(id)
-      : `/user/playlists/${id}/remove-video/`,
-  reorder: (id) =>
-    API_ENDPOINTS?.userPlaylists?.reorder
-      ? API_ENDPOINTS.userPlaylists.reorder(id)
-      : `/user/playlists/${id}/reorder/`,
+  list: "/userdata/playlists/",
+  detail: (id) => `/userdata/playlists/${id}/`,
+  addVideo: (id) => `/userdata/playlists/${id}/add-video/`,
+  removeVideo: (id) => `/userdata/playlists/${id}/remove-video/`,
+  reorder: (id) => `/userdata/playlists/${id}/reorder/`,
 };
+
 
 // ============================================
 // NORMALIZER (DO NOT REMOVE THIS EVER)
@@ -98,60 +87,46 @@ export const useUserPlaylists = () => {
   }, [isAuthenticated]);
 
 
-  useEffect(() => {
-    loadPlaylists();
-  }, [loadPlaylists]);
+ useEffect(() => {
+  setPlaylists([]);   //  clears old/mock/cached data
+  loadPlaylists();   //  loads fresh data from backend
+}, [loadPlaylists]);
+
 
   // ============================================
   // CREATE PLAYLIST
   // ============================================
 
-  const createPlaylist = useCallback(
-    async (name, description = "") => {
-      if (!isAuthenticated || !name?.trim()) return null;
+const createPlaylist = useCallback(
+  async ({ title, description = "" }) => {
+    if (!isAuthenticated || !title?.trim()) return null;
 
-      const newPlaylist = await apiRequest(
-        USER_PLAYLIST_ENDPOINTS.list,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            name: name.trim(),
-            description: description.trim(),
-          }),
-        }
-      );
+    const newPlaylist = await apiRequest(
+      USER_PLAYLIST_ENDPOINTS.list,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+        }),
+      }
+    );
 
-      const normalized = normalizePlaylist(newPlaylist);
-      setPlaylists((prev) => [normalized, ...prev]);
-      return normalized;
-    },
-    [isAuthenticated]
-  );
+    const normalized = normalizePlaylist(newPlaylist);
+    setPlaylists((prev) => [normalized, ...prev]);
+    return normalized;
+  },
+  [isAuthenticated]
+);
+
 
   // ============================================
   // UPDATE PLAYLIST
   // ============================================
 
-  const updatePlaylist = useCallback(
-    async (playlistId, updates) => {
-      if (!isAuthenticated) return null;
-
-      const updated = await apiRequest(
-        USER_PLAYLIST_ENDPOINTS.detail(playlistId),
-        {
-          method: "PATCH",
-          body: JSON.stringify(updates),
-        }
-      );
-
-      const normalized = normalizePlaylist(updated);
-      setPlaylists((prev) =>
-        prev.map((p) => (p.id === playlistId ? normalized : p))
-      );
-      return normalized;
-    },
-    [isAuthenticated]
-  );
+ const updatePlaylist = useCallback(async () => {
+  throw new Error("Playlist update not supported yet");
+}, []);
 
   // ============================================
   // DELETE PLAYLIST

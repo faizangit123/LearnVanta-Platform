@@ -115,14 +115,22 @@ export const toggleFavorite = async (video) => {
 };
 
 export const addToFavorites = async (video) => {
-  return toggleFavorite(video);
+  const data = await apiRequest(
+    `/userdata/favorites/${video.id}/add/`,
+    { method: "POST" }
+  );
+
+  return (data || []).map(normalizeFavorite);
 };
+
 
 export const removeFromFavorites = async (videoId) => {
-  await apiRequest(`/userdata/favorites/${videoId}/toggle/`, {
-    method: "POST",
-  });
+  const data = await apiRequest(
+    `/userdata/favorites/${videoId}/remove/`,
+    { method: "DELETE" }
+  );
 
-  return getFavorites();
+  return (data || []).map(normalizeFavorite);
 };
+
 

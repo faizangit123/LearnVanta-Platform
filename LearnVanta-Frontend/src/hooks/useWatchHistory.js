@@ -2,12 +2,11 @@
  * Watch History Hook
  * 
  * Manages video watch history using Django API.
- * (Mock mode is effectively disabled in production)
  */
 
 import { useState, useEffect, useCallback } from "react";
 import * as videoService from "../services/videoService";
-import { useAuth } from "../context/AuthContext.jsx"; // ✅ CORRECT PATH
+import { useAuth } from "../context/AuthContext.jsx"; 
 
 export const useWatchHistory = () => {
   const { isAuthenticated } = useAuth();   // auth guard

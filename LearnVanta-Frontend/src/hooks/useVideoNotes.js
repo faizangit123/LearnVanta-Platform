@@ -16,12 +16,13 @@ const STORAGE_KEY = "edustream_video_notes";
 // ============================================
 
 const NOTES_ENDPOINTS = {
-  list: "/user/notes/",
-  byVideo: (id) => `/user/notes/video/${id}/`,
-  create: (id) => `/user/notes/video/${id}/`,
-  update: (id) => `/user/notes/${id}/`,
-  delete: (id) => `/user/notes/${id}/`,
+  list: "/userdata/notes/",
+  byVideo: (id) => `/userdata/notes/video/${id}/`,
+  create: (id) => `/userdata/notes/video/${id}/`,
+  update: (id) => `/userdata/notes/${id}/`,
+  delete: (id) => `/userdata/notes/${id}/`,
 };
+
 
 
 // ============================================

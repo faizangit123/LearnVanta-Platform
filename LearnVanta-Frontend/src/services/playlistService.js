@@ -4,10 +4,10 @@
  * Handles CRUD operations for video playlists.
  */
 
-import { API_CONFIG, apiRequest } from "../config/api.js";
+import { apiRequest } from "../config/api.js";
 import { logActivity, ACTIVITY_TYPES } from "./activityLogService.js";
 
-const PLAYLISTS_KEY = "edustream_playlists";
+// const PLAYLISTS_KEY = "edustream_playlists";
 
 // ============================================
 // NORMALIZER (backend -> frontend shape)
@@ -29,19 +29,19 @@ const normalizePlaylist = (playlist) => ({
 // ============================================
 
 export const getAllPlaylists = async () => {
-  const data = await apiRequest("/content/playlists/");
+  const data = await apiRequest("/userdata/playlists/");
   return (data || []).map(normalizePlaylist);
 };
 
 export const getPlaylistById = async (playlistId) => {
-  const data = await apiRequest(`/content/playlists/${playlistId}/`);
+  const data = await apiRequest(`/userdata/playlists/${playlistId}/`);
   return normalizePlaylist(data);
 };
 
-export const getPlaylistsByChapter = async (chapterId) => {
-  const data = await apiRequest(`/content/playlists/?chapter_id=${chapterId}`);
-  return (data || []).map(normalizePlaylist);
-};
+// export const getPlaylistsByChapter = async (chapterId) => {
+//   const data = await apiRequest(`/userdata/playlists/?chapter_id=${chapterId}`);
+//   return (data || []).map(normalizePlaylist);
+// };
 
 // ============================================
 // CREATE OPERATIONS
@@ -52,7 +52,7 @@ export const createPlaylist = async (playlistData) => {
     throw new Error("Playlist title is required");
   }
 
-  const response = await apiRequest("/content/playlists/", {
+  const response = await apiRequest("/userdata/playlists/", {
     method: "POST",
     body: JSON.stringify({
       title: playlistData.title.trim(),
@@ -78,66 +78,72 @@ export const createPlaylist = async (playlistData) => {
 // UPDATE OPERATIONS
 // ============================================
 
-export const updatePlaylist = async (playlistId, playlistData) => {
-  if (!playlistData.title?.trim()) {
-    throw new Error("Playlist title is required");
-  }
+// export const updatePlaylist = async (playlistId, playlistData) => {
+//   if (!playlistData.title?.trim()) {
+//     throw new Error("Playlist title is required");
+//   }
 
-  const response = await apiRequest(
-    `/content/playlists/${playlistId}/`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({
-        title: playlistData.title.trim(),
-        description: playlistData.description?.trim(),
-        thumbnail: playlistData.thumbnail,
-        chapter_id: playlistData.chapterId,
-        video_ids: playlistData.videoIds,
-        is_public: playlistData.isPublic,
-      }),
-    }
-  );
+//   const response = await apiRequest(
+//     `/userdata/playlists/${playlistId}/`,
+//     {
+//       method: "PATCH",
+//       body: JSON.stringify({
+//         title: playlistData.title.trim(),
+//         description: playlistData.description?.trim(),
+//         thumbnail: playlistData.thumbnail,
+//         chapter_id: playlistData.chapterId,
+//         video_ids: playlistData.videoIds,
+//         is_public: playlistData.isPublic,
+//       }),
+//     }
+//   );
 
-  const normalized = normalizePlaylist(response);
+//   const normalized = normalizePlaylist(response);
 
-  logActivity(ACTIVITY_TYPES.VIDEO_UPDATED, {
-    videoId: normalized.id,
-    videoTitle: `Playlist: ${normalized.title}`,
-    chapterName: "Playlist Updated",
-  });
+//   logActivity(ACTIVITY_TYPES.VIDEO_UPDATED, {
+//     videoId: normalized.id,
+//     videoTitle: `Playlist: ${normalized.title}`,
+//     chapterName: "Playlist Updated",
+//   });
 
-  return normalized;
+//   return normalized;
+// };
+
+export const updatePlaylist = async () => {
+  throw new Error("Playlist update not supported yet");
 };
+
 
 // ============================================
 // VIDEO HELPERS (safe + backend compatible)
 // ============================================
 
 export const addVideoHelper = async (playlistId, videoId) => {
-  const playlist = await getPlaylistById(playlistId);
-
-  if (playlist.videoIds.includes(videoId)) {
-    return playlist;
-  }
-
-  return updatePlaylist(playlistId, {
-    ...playlist,
-    videoIds: [...playlist.videoIds, videoId],
-  });
+  const response = await apiRequest(
+    `/userdata/playlists/${playlistId}/add-video/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ video_id: videoId }),
+    }
+  );
+  return normalizePlaylist(response);
 };
 
 export const removeVideoHelper = async (playlistId, videoId) => {
-  const playlist = await getPlaylistById(playlistId);
-
-  return updatePlaylist(playlistId, {
-    ...playlist,
-    videoIds: playlist.videoIds.filter(id => id !== videoId),
-  });
+  const response = await apiRequest(
+    `/userdata/playlists/${playlistId}/remove-video/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ video_id: videoId }),
+    }
+  );
+  return normalizePlaylist(response);
 };
+
 
 export const reorderPlaylistVideos = async (playlistId, newVideoIds) => {
   const response = await apiRequest(
-    `/content/playlists/${playlistId}/reorder/`,
+    `/userdata/playlists/${playlistId}/reorder/`,
     {
       method: "POST",
       body: JSON.stringify({ video_ids: newVideoIds }),
@@ -154,7 +160,7 @@ export const reorderPlaylistVideos = async (playlistId, newVideoIds) => {
 export const deletePlaylist = async (playlistId) => {
   const playlist = await getPlaylistById(playlistId);
 
-  await apiRequest(`/content/playlists/${playlistId}/`, {
+  await apiRequest(`/userdata/playlists/${playlistId}/`, {
     method: "DELETE",
   });
 
@@ -168,15 +174,3 @@ export const deletePlaylist = async (playlistId) => {
 
   return { success: true };
 };
-
-// ============================================
-// MOCK UTILITIES (never used in prod)
-// ============================================
-
-// kept only for future dev/testing
-// because VITE_USE_MOCK=false they never execute
-
-// export const resetPlaylists = async () => {
-//   localStorage.setItem(PLAYLISTS_KEY, JSON.stringify([]));
-//   return [];
-// };

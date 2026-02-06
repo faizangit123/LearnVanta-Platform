@@ -50,9 +50,10 @@ export const AuthProvider = ({ children }) => {
   // ============================================
   useEffect(() => {
     const initAuth = async () => {
+      setUser(null); // prevents stale/mock flashes
       try {
         const token = getAuthToken();
-
+        
         // No token → not logged in
         if (!token) {
           setUser(null);

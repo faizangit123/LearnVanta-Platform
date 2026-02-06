@@ -176,3 +176,11 @@ export const getApiConfig = () => ({
   useMock: API_CONFIG.useMock,
   maxFileSize: RESOURCE_CONFIG.maxFileSize,
 });
+
+
+export const trackDownload = async (resourceId) => {
+  await apiRequest(`/resources/${resourceId}/track-download/`, {
+    method: "POST",
+  });
+};
+

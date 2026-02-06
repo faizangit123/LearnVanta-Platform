@@ -5,7 +5,7 @@
 // ============================================
 
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   useMock: false,
   timeout: 30000,
   apiPrefix: '',
@@ -60,30 +60,40 @@ export const API_ENDPOINTS = {
   },
 
   // =========================
-  // USER DATA
+  // USERDATA 
   // =========================
   history: {
-    list: '/user/history/',
-    add: '/user/history/',
-    remove: (videoId) => `/user/history/${videoId}/`,
-    clear: '/user/history/clear/',
+    list: '/userdata/history/',
+    add: '/userdata/history/',
+    remove: (videoId) => `/userdata/history/${videoId}/`,
+    clear: '/userdata/history/clear/',
   },
 
   progress: {
-    get: (videoId) => `/user/progress/${videoId}/`,
-    update: (videoId) => `/user/progress/${videoId}/`,
+    get: (videoId) => `/userdata/progress/${videoId}/`,
+    update: (videoId) => `/userdata/progress/${videoId}/`,
   },
 
   favorites: {
-    list: '/user/favorites/',
-    toggle: (videoId) => `/user/favorites/${videoId}/toggle/`,
+    list: '/userdata/favorites/',
+    toggle: (videoId) => `/userdata/favorites/${videoId}/toggle/`,
   },
 
   notes: {
-    byVideo: (videoId) => `/user/notes/video/${videoId}/`,
-    list: '/user/notes/',
-     detail: (noteId) => `/user/notes/${noteId}/`,
+    byVideo: (videoId) => `/userdata/notes/video/${videoId}/`,
+    list: '/userdata/notes/',
+     detail: (noteId) => `/userdata/notes/${noteId}/`,
   },
+
+
+  playlists: {
+  list: "/userdata/playlists/",
+  detail: (id) => `/userdata/playlists/${id}/`,
+  create: "/userdata/playlists/",
+  update: (id) => `/userdata/playlists/${id}/`,
+  delete: (id) => `/userdata/playlists/${id}/`,
+},
+
 
   // =========================
   // RESOURCES 

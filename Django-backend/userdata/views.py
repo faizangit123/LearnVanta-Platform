@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from rest_framework import status
 
 from .models import (
     WatchHistory,
@@ -33,7 +34,7 @@ def watch_history_list(request):
     if request.method == "GET":
         history = WatchHistory.objects.filter(user=user).order_by("-watched_at")
         serializer = WatchHistorySerializer(history, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method == "POST":
         video_id = request.data.get("video_id")
@@ -51,7 +52,7 @@ def watch_history_list(request):
             obj.save()  # updates watched_at via auto_now
 
         serializer = WatchHistorySerializer(obj)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["DELETE"])
@@ -61,7 +62,7 @@ def watch_history_delete(request, video_id):
         user=request.user,
         video_id=video_id
     ).delete()
-    return Response({"success": True})
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ---------------------------
@@ -81,7 +82,7 @@ def progress_detail(request, video_id):
 
     if request.method == "GET":
         serializer = WatchProgressSerializer(obj)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method == "POST":
         current = request.data.get("current_time", obj.current_time)
@@ -95,11 +96,11 @@ def progress_detail(request, video_id):
 
         obj.current_time = current
         obj.duration = duration
-        obj.percentage = int((current / duration) * 100) if duration else 0
+        obj.percentage = int((current / duration) * 100) if duration > 0 else 0
         obj.save()
 
         serializer = WatchProgressSerializer(obj)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # ---------------------------
@@ -111,7 +112,7 @@ def progress_detail(request, video_id):
 def favorites_list(request):
     favorites = Favorite.objects.filter(user=request.user)
     serializer = FavoriteSerializer(favorites, many=True)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -132,7 +133,33 @@ def favorites_toggle(request, video_id):
     favorites = Favorite.objects.filter(user=user)
     serializer = FavoriteSerializer(favorites, many=True)
 
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def favorites_add(request, video_id):
+    user = request.user
+    video = get_object_or_404(Video, id=video_id)
+
+    Favorite.objects.get_or_create(user=user, video=video)
+
+    favorites = Favorite.objects.filter(user=user)
+    serializer = FavoriteSerializer(favorites, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def favorites_remove(request, video_id):
+    Favorite.objects.filter(
+        user=request.user,
+        video_id=video_id
+    ).delete()
+
+    favorites = Favorite.objects.filter(user=request.user)
+    serializer = FavoriteSerializer(favorites, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -149,13 +176,13 @@ def notes_by_video(request, video_id):
     if request.method == "GET":
         notes = Note.objects.filter(user=user, video=video)
         serializer = NoteSerializer(notes, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method == "POST":
         serializer = NoteSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=user, video=video)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=400)
     
 #-------------------------------------
@@ -166,13 +193,13 @@ def notes_list_create(request):
     if request.method == "GET":
         notes = Note.objects.filter(user=request.user)
         serializer = NoteSerializer(notes, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method == "POST":
         serializer = NoteSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
-            return Response(serializer.data, status=201)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=400)
 
 
@@ -185,7 +212,7 @@ def note_detail(request, note_id):
         serializer = NoteSerializer(note, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=400)
 
     if request.method == "DELETE":
@@ -209,13 +236,13 @@ def playlists_list(request):
     if request.method == "GET":
         playlists = UserPlaylist.objects.filter(user=user)
         serializer = UserPlaylistSerializer(playlists, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method == "POST":
         serializer = UserPlaylistSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=user)
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=400)
 
 
@@ -240,9 +267,9 @@ def playlists_add_video(request, playlist_id):
             order=playlist.playlist_videos.count()
         )
 
+    playlist.refresh_from_db()
     serializer = UserPlaylistSerializer(playlist)
-    return Response(serializer.data)
-
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -266,9 +293,10 @@ def playlists_remove_video(request, playlist_id):
     for index, item in enumerate(remaining):
         item.order = index
         item.save(update_fields=["order"])
-
+        
+    playlist.refresh_from_db()
     serializer = UserPlaylistSerializer(playlist)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
@@ -285,6 +313,35 @@ def playlists_reorder(request, playlist_id):
             playlist=playlist,
             video_id=vid
         ).update(order=index)
-
+    playlist.refresh_from_db()
     serializer = UserPlaylistSerializer(playlist)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["GET", "DELETE"])
+@permission_classes([IsAuthenticated])
+def playlist_detail(request, playlist_id):
+    try:
+        playlist = UserPlaylist.objects.get(
+            id=playlist_id,
+            user=request.user
+        )
+    except UserPlaylist.DoesNotExist:
+        return Response(
+            {"detail": "Playlist not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == "GET":
+        return Response({
+            "id": playlist.id,
+            "title": playlist.title,
+            "description": playlist.description,
+            "is_public": playlist.is_public,
+            "video_ids": list(
+                playlist.videos.values_list("id", flat=True)
+            ),"created_at": playlist.created_at,
+            },status=status.HTTP_200_OK)
+
+    if request.method == "DELETE":
+        playlist.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

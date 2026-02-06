@@ -2,8 +2,7 @@
  * Activity Log Service
  * 
  * Tracks user activities like registrations, logins, role changes, and video management.
- * Uses mock localStorage when API_CONFIG.useMock is true,
- * otherwise calls Django REST API.
+ * Uses Django REST API only (production-safe).
  */
 
 import {
@@ -11,8 +10,7 @@ import {
   apiRequest
 } from "../config/api.js";
 
-const ACTIVITY_LOG_KEY = "edustream_activity_logs";
-const MAX_LOGS = 100;
+
 
 // ============================================
 // Activity Types (must match Django)
@@ -74,22 +72,22 @@ export const getActivityMeta = (type) => {
   }
 };
 
-// ============================================
-// LOCAL STORAGE HELPERS (mock only)
-// ============================================
+// // ============================================
+// // LOCAL STORAGE HELPERS (mock only)
+// // ============================================
 
-const getLocalLogs = () => {
-  try {
-    const stored = localStorage.getItem(ACTIVITY_LOG_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
+// const getLocalLogs = () => {
+//   try {
+//     const stored = localStorage.getItem(ACTIVITY_LOG_KEY);
+//     return stored ? JSON.parse(stored) : [];
+//   } catch {
+//     return [];
+//   }
+// };
 
-const saveLocalLogs = (logs) => {
-  localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(logs));
-};
+// const saveLocalLogs = (logs) => {
+//   localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(logs));
+// };
 
 // ============================================
 // READ LOGS
@@ -107,33 +105,14 @@ export const getActivityLogs = async () => {
 export const logActivity = (type, details = {}) => {
   if (!type) return;
 
-  if (!API_CONFIG.useMock) {
-    // Django: POST /activities/create/
-    apiRequest("/activities/create/", {
-      method: "POST",
-      body: JSON.stringify({
-        type,
-        details
-      }),
-    }).catch(() => {});
-    return;
-  }
-
-  // Mock fallback
-  const logs = getLocalLogs();
-
-  const newLog = {
-    id: "log_" + Date.now() + "_" + Math.random().toString(36).slice(2),
-    type,
-    details,
-    timestamp: new Date().toISOString(),
-  };
-
-  const updatedLogs = [newLog, ...logs].slice(0, MAX_LOGS);
-  saveLocalLogs(updatedLogs);
-
-  return newLog;
+  apiRequest("/activities/create/", {
+    method: "POST",
+    body: JSON.stringify({ type, details }),
+  }).catch((err) => {
+    console.warn("Activity log failed:", err);
+  });
 };
+
 
 // ============================================
 // FILTERED READS
@@ -161,18 +140,11 @@ export const getUserActivities = async (userId, limit = 20) => {
 // ============================================
 
 export const clearActivityLogs = async () => {
-  if (!API_CONFIG.useMock) {
-    // Django: DELETE /activities/clear/
-    return apiRequest("/activities/clear/", {
-      method: "DELETE",
-    });
-  }
-
-  localStorage.removeItem(ACTIVITY_LOG_KEY);
-  return {
-    success: true
-  };
+  return apiRequest("/activities/clear/", {
+    method: "POST",
+  });
 };
+
 
 // ============================================
 // STATS

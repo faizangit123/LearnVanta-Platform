@@ -53,35 +53,42 @@ const AddToPlaylistModal = ({ isOpen, onClose, video }) => {
     }
   };
 
-  const handleTogglePlaylist = (playlistId) => {
-    if (!isAuthenticated) {
-      showLoginPrompt("playlists");
-      return;
-    }
-    
-    if (isVideoInPlaylist(playlistId, video.id)) {
-      removeVideoFromPlaylist(playlistId, video.id);
-    } else {
-      addVideoToPlaylist(playlistId, video.id);
-    }
-  };
+  const handleTogglePlaylist = async (playlistId) => {
+  if (!isAuthenticated) {
+    showLoginPrompt("playlists");
+    return;
+  }
 
-  const handleCreatePlaylist = async (e) => {
-    e.preventDefault();
-    if (!newPlaylistName.trim()) return;
-    
+  if (isVideoInPlaylist(playlistId, video.id)) {
+    await removeVideoFromPlaylist(playlistId, video.id);
+  } else {
+    await addVideoToPlaylist(playlistId, video.id);
+  }
+};
+ const handleCreatePlaylist = async (e) => {
+  e.preventDefault();
+  if (!newPlaylistName.trim()) return;
+
+  try {
     setIsCreating(true);
-    const newPlaylist = createPlaylist(newPlaylistName, newPlaylistDesc);
-    
+
+    const newPlaylist = await createPlaylist({
+      title: newPlaylistName,
+      description: newPlaylistDesc,
+    });
+
     if (newPlaylist && video) {
-      addVideoToPlaylist(newPlaylist.id, video.id);
+      await addVideoToPlaylist(newPlaylist.id, video.id);
     }
-    
+
     setNewPlaylistName("");
     setNewPlaylistDesc("");
     setShowNewForm(false);
+  } finally {
     setIsCreating(false);
-  };
+  }
+};
+
 
   const styles = {
     overlay: {
@@ -332,7 +339,7 @@ const AddToPlaylistModal = ({ isOpen, onClose, video }) => {
                     >
                       {isInPlaylist && <CheckIcon />}
                     </div>
-                    <span style={styles.playlistName}>{playlist.name}</span>
+                    <span style={styles.playlistName}>{playlist.title}</span>
                     <span style={styles.videoCount}>
                       {playlist.videoIds.length} videos
                     </span>

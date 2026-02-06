@@ -9,6 +9,7 @@ from .serializers import (
     SubjectSerializer,
     ChapterSerializer,
     VideoSerializer,
+    VideoDetailSerializer,  
     VideoCreateSerializer,
     PlaylistSerializer
 )

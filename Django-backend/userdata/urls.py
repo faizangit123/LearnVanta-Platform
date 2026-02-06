@@ -13,6 +13,9 @@ urlpatterns = [
     # ---------------------------
     path("favorites/", views.favorites_list, name="favorites"),
     path("favorites/<str:video_id>/toggle/", views.favorites_toggle, name="favorites-toggle"),
+    path("favorites/<str:video_id>/add/", views.favorites_add),
+    path("favorites/<str:video_id>/remove/", views.favorites_remove),
+
 
     # ---------------------------
     # WATCH PROGRESS
@@ -33,5 +36,5 @@ urlpatterns = [
     path("playlists/<str:playlist_id>/add-video/", views.playlists_add_video, name="playlist-add-video"),
     path("playlists/<str:playlist_id>/remove-video/", views.playlists_remove_video, name="playlist-remove-video"),
     path("playlists/<str:playlist_id>/reorder/", views.playlists_reorder, name="playlist-reorder"),
-    
+    path("playlists/<str:playlist_id>/", views.playlist_detail),    
 ]
