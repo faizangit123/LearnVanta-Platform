@@ -239,10 +239,9 @@ def password_reset_confirm_view(request):
 def logout_view(request):
     try:
         request.user.auth_token.delete()
-    except:
+    except Exception:
         pass
     return Response({'success': True})
-
 
 # ============================================
 # PROFILE

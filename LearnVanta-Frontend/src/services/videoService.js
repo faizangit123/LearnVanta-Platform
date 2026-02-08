@@ -88,7 +88,7 @@ export const updateWatchProgress = async (videoId, currentTime, duration) => {
   const data = await apiRequest(`/userdata/progress/${videoId}/`, {
     method: "POST",
     body: JSON.stringify({
-      current_time: currentTime,   //  correct key
+      current_time: currentTime,   
       duration: duration,
     }),
   });
@@ -114,23 +114,23 @@ export const toggleFavorite = async (video) => {
   return (data || []).map(normalizeFavorite);
 };
 
-// export const addToFavorites = async (video) => {
-//   const data = await apiRequest(
-//     `/userdata/favorites/${video.id}/add/`,
-//     { method: "POST" }
-//   );
 
-//   return (data || []).map(normalizeFavorite);
-// };
+// ============================================
+// FAVORITES (ADD / REMOVE — REQUIRED BY HOOKS)
+// ============================================
 
+export const addToFavorites = async (video) => {
+  const data = await apiRequest(
+    `/userdata/favorites/${video.id}/add/`,
+    { method: "POST" }
+  );
+  return (data || []).map(normalizeFavorite);
+};
 
-// export const removeFromFavorites = async (videoId) => {
-//   const data = await apiRequest(
-//     `/userdata/favorites/${videoId}/remove/`,
-//     { method: "DELETE" }
-//   );
-
-//   return (data || []).map(normalizeFavorite);
-// };
-
-
+export const removeFromFavorites = async (videoId) => {
+  const data = await apiRequest(
+    `/userdata/favorites/${videoId}/remove/`,
+    { method: "DELETE" }
+  );
+  return (data || []).map(normalizeFavorite);
+};

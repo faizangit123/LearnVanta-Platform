@@ -91,8 +91,9 @@ def progress_detail(request, video_id):
         try:
             current = float(current)
             duration = float(duration)
-        except:
+        except (TypeError, ValueError):
             return Response({"error": "Invalid progress values"}, status=400)
+
 
         obj.current_time = current
         obj.duration = duration
@@ -125,10 +126,8 @@ def favorites_toggle(request, video_id):
 
     if fav.exists():
         fav.delete()
-        is_favorite = False
     else:
         Favorite.objects.create(user=user, video=video)
-        is_favorite = True
 
     favorites = Favorite.objects.filter(user=user)
     serializer = FavoriteSerializer(favorites, many=True)

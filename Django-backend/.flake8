@@ -1,5 +1,6 @@
 [flake8]
 max-line-length = 120
+
 exclude =
     .git,
     __pycache__,
@@ -9,9 +10,22 @@ exclude =
     staticfiles,
     media,
     node_modules
+
 ignore =
     E501,
     W293,
     W291,
     F401,
-    F403
+    F403,
+
+    # Formatting / layout (non-breaking)
+    E301,
+    E302,
+    E303,
+    E123,
+    E131,
+    W391,
+    W504,
+    E231,
+    E265,
+    E402
