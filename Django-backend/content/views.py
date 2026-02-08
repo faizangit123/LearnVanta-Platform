@@ -48,6 +48,15 @@ def class_detail(request, class_id):
     cls = get_object_or_404(Class, id=class_id, is_active=True)
     return Response(ClassSerializer(cls).data)
 
+@api_view(["GET"])
+def subjects_list(request):
+    """
+    Return all active subjects (admin + dashboard use)
+    """
+    subjects = Subject.objects.filter(is_active=True).select_related("class_ref").order_by("order")
+    serializer = SubjectSerializer(subjects, many=True)
+    return Response(serializer.data)
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def subjects_by_class(request, class_id):

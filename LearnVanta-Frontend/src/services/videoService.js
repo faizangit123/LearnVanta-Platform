@@ -5,7 +5,7 @@
  * Uses real Django REST API.
  */
 
-import { apiRequest } from "../config/api.js";
+import { apiRequest, safeArray } from "../config/api.js";
 
 // ============================================
 // NORMALIZERS
@@ -44,7 +44,7 @@ const normalizeFavorite = (item) => ({
 
 export const getWatchHistory = async () => {
   const data = await apiRequest("/userdata/history/");
-  return (data || []).map(normalizeHistory);
+  return safeArray(data).map(normalizeHistory);
 };
 
 export const addToWatchHistory = async (video) => {
@@ -55,7 +55,7 @@ export const addToWatchHistory = async (video) => {
     }),
   });
 
-  return (data || []).map(normalizeHistory);
+  return safeArray(data).map(normalizeHistory);
 };
 
 export const removeFromWatchHistory = async (videoId) => {
@@ -102,7 +102,7 @@ export const updateWatchProgress = async (videoId, currentTime, duration) => {
 
 export const getFavorites = async () => {
   const data = await apiRequest("/userdata/favorites/");
-  return (data || []).map(normalizeFavorite);
+  return safeArray(data).map(normalizeFavorite);
 };
 
 export const toggleFavorite = async (video) => {
@@ -111,7 +111,7 @@ export const toggleFavorite = async (video) => {
     { method: "POST" }
   );
 
-  return (data || []).map(normalizeFavorite);
+  return safeArray(data).map(normalizeFavorite);
 };
 
 
@@ -124,7 +124,7 @@ export const addToFavorites = async (video) => {
     `/userdata/favorites/${video.id}/add/`,
     { method: "POST" }
   );
-  return (data || []).map(normalizeFavorite);
+  return safeArray(data).map(normalizeFavorite);
 };
 
 export const removeFromFavorites = async (videoId) => {
@@ -132,5 +132,5 @@ export const removeFromFavorites = async (videoId) => {
     `/userdata/favorites/${videoId}/remove/`,
     { method: "DELETE" }
   );
-  return (data || []).map(normalizeFavorite);
+  return safeArray(data).map(normalizeFavorite);
 };

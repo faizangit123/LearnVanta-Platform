@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # ---------- PUBLIC ----------
     path("classes/", views.classes_list),
+    path("subjects/", views.subjects_list),  
     path("subjects/<str:class_id>/", views.subjects_by_class),
     path("classes/<str:class_id>/", views.class_detail),
     path("chapters/<str:subject_id>/", views.chapters_by_subject),

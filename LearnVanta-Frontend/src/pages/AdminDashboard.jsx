@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "../components/layout";
 import { useAuth } from "../context/AuthContext.jsx";
-import { apiRequest } from "../config/api";
+import { apiRequest, safeArray } from "../config/api";
 import { getAllUsers, updateUserRole, deleteUser } from "../services/authService.js";
 import { getAllVideos, createVideo, updateVideo, deleteVideo as deleteVideoService, bulkDeleteVideos, bulkUpdateVideos } from "../services/videoManagementService.js";
 import { getRecentActivities, getActivityMeta, ACTIVITY_TYPES, clearActivityLogs } from "../services/activityLogService.js";
@@ -303,7 +303,7 @@ const AdminDashboard = () => {
     setActivityLoading(true);
     try {
       const logs = await getRecentActivities(50);
-      setActivityLogs(logs);
+      setActivityLogs(safeArray(logs));
     } catch (error) {
       showNotification("Failed to load activity logs", "error");
     } finally {
@@ -780,7 +780,7 @@ const AdminDashboard = () => {
                 <div className="admin-section">
                   <h2>Class Distribution</h2>
                   <div className="class-distribution">
-                    {classes.map((cls) => (
+                    {safeArray(classes).map((cls) => (
                       <div key={cls.id} className="class-bar">
                         <div className="class-bar-label">
                           <span>{cls.name}</span>

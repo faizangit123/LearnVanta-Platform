@@ -24,8 +24,27 @@ const VideoFormModal = ({ isOpen, onClose, onSubmit, video, isLoading }) => {
   const [chapters, setChapters] = useState([]);
 
   useEffect(() => {
-    setChapters(getChaptersForForm());
-  }, []);
+  let mounted = true;
+
+  const loadChapters = async () => {
+    try {
+      const data = await getChaptersForForm();
+      if (mounted) {
+        setChapters(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error("Failed to load chapters", err);
+      if (mounted) setChapters([]);
+    }
+  };
+
+  loadChapters();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
 
   useEffect(() => {
     if (video) {

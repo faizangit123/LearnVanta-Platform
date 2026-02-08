@@ -5,7 +5,7 @@
  * Uses Django REST API (mock code kept only as comments).
  */
 
-import { API_CONFIG, apiRequest } from "../config/api.js";
+import { API_CONFIG, apiRequest, safeArray } from "../config/api.js";
 
 // ============================================
 // RESOURCE TYPES
@@ -113,7 +113,7 @@ export const getResourcesByChapter = async (chapterId) => {
 
 export const getAllResources = async () => {
   const data = await apiRequest("/resources/");
-  return (data || []).map(normalizeResource);
+  return safeArray(data).map(normalizeResource);
 };
 
 export const getResourceById = async (resourceId) => {

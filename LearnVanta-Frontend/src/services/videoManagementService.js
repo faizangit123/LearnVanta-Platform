@@ -5,7 +5,7 @@
  * Uses real Django REST API.
  */
 
-import { apiRequest } from "../config/api.js";
+import { apiRequest, safeArray } from "../config/api.js";
 import { logActivity, ACTIVITY_TYPES } from "./activityLogService.js";
 
 // ============================================
@@ -39,7 +39,7 @@ const normalizeVideo = (video) => {
 
 export const getAllVideos = async () => {
   const data = await apiRequest("/content/videos/");
-  return (data || []).map(normalizeVideo);
+  return safeArray(data).map(normalizeVideo);
 };
 
 export const getVideoById = async (videoId) => {
@@ -51,12 +51,15 @@ export const searchVideos = async (query) => {
   const data = await apiRequest(
     `/content/videos/?search=${encodeURIComponent(query)}`
   );
-  return (data || []).map(normalizeVideo);
+  return safeArray(data).map(normalizeVideo);
 };
 
-export const getChaptersForForm = async () => {
-  return apiRequest("/content/chapters/");
+export const getChaptersForForm = async (subjectId) => {
+  if (!subjectId) return [];
+  const data = await apiRequest(`/content/chapters/${subjectId}/`);
+  return Array.isArray(data) ? data : [];
 };
+
 
 
 // ============================================

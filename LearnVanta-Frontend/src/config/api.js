@@ -157,7 +157,10 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   const headers = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Token ${token}` }),
+    ...(token && {'Authorization': token.split('.').length === 3
+    ? `Bearer ${token}`   // JWT
+    : `Token ${token}`    // DRF token
+}),
     ...options.headers,
   };
 
@@ -252,3 +255,10 @@ export const formatApiError = (error) => {
 };
 
 
+// ============================================
+// SAFE HELPERS
+// ============================================
+
+export const safeArray = (data) => {
+  return Array.isArray(data) ? data : [];
+};

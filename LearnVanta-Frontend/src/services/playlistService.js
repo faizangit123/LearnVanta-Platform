@@ -4,7 +4,7 @@
  * Handles CRUD operations for video playlists.
  */
 
-import { apiRequest } from "../config/api.js";
+import { apiRequest, safeArray } from "../config/api.js";
 import { logActivity, ACTIVITY_TYPES } from "./activityLogService.js";
 
 // const PLAYLISTS_KEY = "edustream_playlists";
@@ -30,7 +30,7 @@ const normalizePlaylist = (playlist) => ({
 
 export const getAllPlaylists = async () => {
   const data = await apiRequest("/userdata/playlists/");
-  return (data || []).map(normalizePlaylist);
+  return safeArray(data).map(normalizePlaylist);
 };
 
 export const getPlaylistById = async (playlistId) => {
@@ -38,10 +38,6 @@ export const getPlaylistById = async (playlistId) => {
   return normalizePlaylist(data);
 };
 
-// export const getPlaylistsByChapter = async (chapterId) => {
-//   const data = await apiRequest(`/userdata/playlists/?chapter_id=${chapterId}`);
-//   return (data || []).map(normalizePlaylist);
-// };
 
 // ============================================
 // CREATE OPERATIONS

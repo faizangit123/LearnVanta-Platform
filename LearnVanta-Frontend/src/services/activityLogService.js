@@ -94,9 +94,13 @@ export const getActivityMeta = (type) => {
 // ============================================
 
 export const getActivityLogs = async () => {
-  return apiRequest("/activities/");
+  try {
+    const data = await apiRequest("/activities/");
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 };
-
 
 // ============================================
 // CREATE LOG
@@ -107,12 +111,14 @@ export const logActivity = (type, details = {}) => {
 
   apiRequest("/activities/create/", {
     method: "POST",
-    body: JSON.stringify({ type, details }),
+    body: JSON.stringify({
+      type,
+      details,
+    }),
   }).catch((err) => {
-    console.warn("Activity log failed:", err);
+    console.warn("Activity log failed:", err.message);
   });
 };
-
 
 // ============================================
 // FILTERED READS
@@ -120,8 +126,9 @@ export const logActivity = (type, details = {}) => {
 
 export const getRecentActivities = async (limit = 20) => {
   const logs = await getActivityLogs();
-  return logs.slice(0, limit);
+  return Array.isArray(logs) ? logs.slice(0, limit) : [];
 };
+
 
 export const getActivitiesByType = async (type, limit = 20) => {
   const logs = await getActivityLogs();
@@ -144,7 +151,6 @@ export const clearActivityLogs = async () => {
     method: "POST",
   });
 };
-
 
 // ============================================
 // STATS
