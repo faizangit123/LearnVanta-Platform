@@ -54,6 +54,11 @@ export const searchVideos = async (query) => {
   return (data || []).map(normalizeVideo);
 };
 
+export const getChaptersForForm = async () => {
+  return apiRequest("/content/chapters/");
+};
+
+
 // ============================================
 // CREATE OPERATIONS
 // ============================================

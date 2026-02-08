@@ -40,7 +40,7 @@ FULL-STACK/
 │ ├── edustream_backend/
 │ └── manage.py
 │
-├── EadStream-Frontend/ # React + Vite frontend
+├── LearnVanta-Frontend/ # React + Vite frontend
 │ ├── src/
 │ ├── public/
 │ ├── vite.config.js
