@@ -11,14 +11,11 @@ urlpatterns = [
     path("subjects/search/", views.search_subjects),
     path("chapters/search/", views.search_chapters),
 
-
     # Videos (public)
     path("videos/", views.all_videos),
+    path("videos/trending/", views.trending_videos),
     path("videos/chapter/<str:chapter_id>/", views.videos_by_chapter),
     path("videos/<str:video_id>/", views.video_detail),
-    path("videos/trending/", views.trending_videos),
-
-
     
     # ---------- ADMIN VIDEOS ----------
      path("admin/videos/", views.admin_videos_list),

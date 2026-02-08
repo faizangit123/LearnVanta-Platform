@@ -11,6 +11,8 @@ def health_check(request):
 
 
 urlpatterns = [
+    path("favicon.ico", RedirectView.as_view(url="/static/favicon.ico")),
+    
     # Django admin (internal only)
     path("admin/", admin.site.urls),
 

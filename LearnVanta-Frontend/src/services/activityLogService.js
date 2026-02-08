@@ -93,14 +93,15 @@ export const getActivityMeta = (type) => {
 // READ LOGS
 // ============================================
 
-export const getActivityLogs = async () => {
+export const getActivityLogs = async (limit = 100) => {
   try {
-    const data = await apiRequest("/activities/");
+    const data = await apiRequest(`/activities/recent/?limit=${limit}`);
     return Array.isArray(data) ? data : [];
   } catch {
     return [];
   }
 };
+
 
 // ============================================
 // CREATE LOG
@@ -125,9 +126,14 @@ export const logActivity = (type, details = {}) => {
 // ============================================
 
 export const getRecentActivities = async (limit = 20) => {
-  const logs = await getActivityLogs();
-  return Array.isArray(logs) ? logs.slice(0, limit) : [];
+  try {
+    const data = await apiRequest(`/activities/recent/?limit=${limit}`);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 };
+
 
 
 export const getActivitiesByType = async (type, limit = 20) => {
@@ -148,7 +154,7 @@ export const getUserActivities = async (userId, limit = 20) => {
 
 export const clearActivityLogs = async () => {
   return apiRequest("/activities/clear/", {
-    method: "POST",
+    method: "DELETE",
   });
 };
 

@@ -26,6 +26,7 @@ const normalizeVideo = (video) => {
     duration: video.duration,
     chapterId: video.chapter?.id || video.chapter_id,
     chapterName: video.chapter?.name || video.chapter_name || "",
+    subjectId: video.subjectId,
     tags: video.tags || [],
     isTrending: video.is_trending || false,
     createdAt: video.created_at,

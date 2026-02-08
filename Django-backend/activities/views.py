@@ -1,5 +1,5 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 
@@ -30,27 +30,35 @@ def activities_list(request):
 
 
 # ----------------------------------
-# CREATE ACTIVITY (ANY AUTH USER)
+# CREATE ACTIVITY (SAFE / NON-BLOCKING)
 # ----------------------------------
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@api_view(["POST"])
+@permission_classes([AllowAny])
 def create_activity(request):
     """
     Frontend sends: { type, details }
     Backend injects: user + timestamp
+    Logging must NEVER crash the app.
     """
 
-    serializer = ActivityLogSerializer(data={
-        "type": request.data.get("type"),
-        "details": request.data.get("details", {}),
-        "user": request.user.id,
-        "timestamp": timezone.now()
-    })
+    try:
+        serializer = ActivityLogSerializer(data={
+            "type": request.data.get("type"),
+            "details": request.data.get("details", {}),
+            "user": request.user.id,
+            "timestamp": timezone.now(),
+        })
 
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    return Response(serializer.data, status=201)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
 
+    except Exception:
+        # swallow all logging errors
+        pass
+
+    # Always succeed from frontend POV
+    return Response({"ignored": True}, status=200)
 
 # ----------------------------------
 # CLEAR ACTIVITIES (ADMIN ONLY)
