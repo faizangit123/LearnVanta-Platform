@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
-
+from django.views.generic import RedirectView
 
 # Health check endpoint (Render / monitoring)
 def health_check(request):
@@ -11,7 +11,6 @@ def health_check(request):
 
 
 urlpatterns = [
-    path("favicon.ico", RedirectView.as_view(url="/static/favicon.ico")),
     
     # Django admin (internal only)
     path("admin/", admin.site.urls),
@@ -25,6 +24,8 @@ urlpatterns = [
     path("api/v1/content/", include("content.urls")),
     path("api/v1/resources/", include("resources.urls")),
     path("api/v1/activities/", include("activities.urls")),
+    
+    path("favicon.ico", RedirectView.as_view(url="/static/favicon.ico")),
 ]
 
 # Media files (local dev only)
