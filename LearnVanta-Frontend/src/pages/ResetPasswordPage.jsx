@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { resetPassword, validateResetToken } from "../services/authService.js";
+import { resetPassword } from "../services/authService.js";
 
 const ArrowLeftIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -56,7 +56,6 @@ const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
-
   const [formData, setFormData] = useState({
     password: "",
     confirmPassword: "",
@@ -69,25 +68,21 @@ const ResetPasswordPage = () => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   // Validate token on mount
+  // // redirect after success
   useEffect(() => {
-    const validateToken = async () => {
-      if (!token) {
-        setTokenError("Invalid or missing reset token. Please request a new password reset link.");
-        setIsValidating(false);
-        return;
-      }
+    if (isSuccess) {
+      const t = setTimeout(() => navigate("/login"), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [isSuccess, navigate]);
+  
+  useEffect(() => {
+  if (!token) {
+    setTokenError("Invalid or missing reset token. Please request a new password reset link.");
+  }
+  setIsValidating(false);
+}, [token]);
 
-      try {
-        await validateResetToken(token);
-        setIsValidating(false);
-      } catch (err) {
-        setTokenError(err.message);
-        setIsValidating(false);
-      }
-    };
-
-    validateToken();
-  }, [token]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
