@@ -14,7 +14,6 @@ from datetime import timedelta
 def require_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
 
-
 # ----------------------------------
 # GET ALL ACTIVITIES (ADMIN ONLY)
 # ----------------------------------
@@ -28,9 +27,8 @@ def activities_list(request):
     serializer = ActivityLogSerializer(logs, many=True)
     return Response(serializer.data)
 
-
 # ----------------------------------
-# CREATE ACTIVITY (SAFE / NON-BLOCKING)
+# CREATE ACTIVITY 
 # ----------------------------------
 @api_view(["POST"])
 @permission_classes([AllowAny])

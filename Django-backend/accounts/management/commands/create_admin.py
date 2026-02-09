@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
         user = User.objects.create_superuser(
             email=email,
-            username=email,   # FORCE username = email
+            username=username,
             password=password,
             first_name="Faizan(Admin)",
             email_verified=True,
