@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'EadStream-Frontend/**'
+      - 'LearnVanta-Frontend/**'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'EadStream-Frontend/**'
+      - 'LearnVanta-Frontend/**'
 
 env:
   NODE_VERSION: '20'
@@ -19,7 +19,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: EadStream-Frontend
+        working-directory: LearnVanta-Frontend
 
     steps:
       - name: Checkout repo
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: EadStream-Frontend/package-lock.json
+          cache-dependency-path: LearnVanta-Frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
