@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from content.models import Class, Subject, Chapter, Video
 
 
@@ -6,12 +7,15 @@ class Command(BaseCommand):
     help = "Seed initial data for LearnVanta"
 
     def handle(self, *args, **kwargs):
-        # Prevent duplicate seeding
-        if Class.objects.exists():
-            self.stdout.write("Data already exists, skipping seeding.")
-            return
+        with transaction.atomic():
 
-        self.stdout.write("Seeding LearnVanta data...")
+            # CLEAN DB 
+            Video.objects.all().delete()
+            Chapter.objects.all().delete()
+            Subject.objects.all().delete()
+            Class.objects.all().delete()
+
+            self.stdout.write("Seeding LearnVanta data...")
 
         # =====================
         # CLASSES
