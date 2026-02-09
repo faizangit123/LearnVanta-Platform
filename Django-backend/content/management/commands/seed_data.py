@@ -82,6 +82,13 @@ class Command(BaseCommand):
         # =====================
         # CHAPTERS
         # =====================
+        ch_chem11_1 = Chapter.objects.create(
+            id="ch-chem11-structure-atom",
+            subject=chemistry_11,
+            name="Structure of Atom",
+            order=1,
+            )
+        
         ch_phy11_1 = Chapter.objects.create(
             id="ch-phy11-physical-world",
             subject=physics_11,
@@ -118,9 +125,16 @@ class Command(BaseCommand):
         )
 
         # =====================
-        # VIDEOS (REAL YOUTUBE LINKS)
+        # VIDEOS
         # =====================
         videos = [
+            {
+                "id": "vid-chem11-1",
+                "chapter": ch_chem11_1,
+                "title": "Structure of Atom – Class 11 Chemistry",
+                "youtube_id": "YpX1R9J4XkQ",
+                "duration": "19:50",
+                },
             {
                 "id": "vid-phy11-1",
                 "chapter": ch_phy11_1,
