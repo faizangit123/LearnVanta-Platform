@@ -41,6 +41,7 @@ RUN mkdir -p /app/staticfiles /app/media
 # -----------------------------
 CMD sh -c "\
     python manage.py migrate && \
+    python manage.py seed_data && \
     python manage.py create_admin && \
     python manage.py collectstatic --noinput && \
     gunicorn edustream_backend.wsgi:application \
@@ -48,3 +49,4 @@ CMD sh -c "\
     --workers 2 \
     --timeout 120 \
 "
+
