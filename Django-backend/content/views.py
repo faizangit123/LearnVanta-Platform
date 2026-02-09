@@ -25,6 +25,7 @@ from django.db.models import Q
 @permission_classes([AllowAny])
 def all_videos(request):
     q = request.query_params.get("search", "").strip()
+    ordering = request.query_params.get("ordering", "-published_at")
 
     videos = Video.objects.filter(is_active=True)
 
@@ -33,8 +34,20 @@ def all_videos(request):
             Q(title__icontains=q) |
             Q(description__icontains=q)
         )
+        
+    allowed_ordering = {
+        "published_at": "published_at",
+        "-published_at": "-published_at",
+        "views": "views",
+        "-views": "-views",
+    }
+
+    videos = videos.order_by(
+        allowed_ordering.get(ordering, "-published_at")
+    )
 
     return Response(VideoSerializer(videos, many=True).data)
+
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
