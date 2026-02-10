@@ -30,7 +30,7 @@ def all_videos(request):
     videos = (Video.objects.filter(is_active=True).select_related(
         "chapter",
         "chapter__subject",
-        "chapter__subject__class_ref"\
+        "chapter__subject__class_ref",
             )
               )
 
