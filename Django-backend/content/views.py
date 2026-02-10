@@ -27,7 +27,13 @@ def all_videos(request):
     q = request.query_params.get("search", "").strip()
     ordering = request.query_params.get("ordering", "-published_at")
 
-    videos = Video.objects.filter(is_active=True)
+    videos = (Video.objects.filter(is_active=True).select_related(
+        "chapter",
+        "chapter__subject",
+        "chapter__subject__class_ref"\
+            )
+              )
+
 
     if q:
         videos = videos.filter(
