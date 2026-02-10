@@ -134,3 +134,17 @@ class PlaylistVideo(models.Model):
         db_table = 'playlist_videos'
         ordering = ['order']
         unique_together = ['playlist', 'video']
+
+class SeedLock(models.Model):
+    """
+    Prevents seed_data from running multiple times
+    (important for Docker + Render + Gunicorn)
+    """
+    key = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "seed_lock"
+
+    def __str__(self):
+        return self.key

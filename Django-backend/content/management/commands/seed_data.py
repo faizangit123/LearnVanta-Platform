@@ -1,27 +1,39 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from content.models import Class, Subject, Chapter, Video
+from content.models import Class, Subject, Chapter, Video, SeedLock
 
 
 class Command(BaseCommand):
-    help = "Seed initial data for LearnVanta"
+    help = "Seed LearnVanta initial data (safe for Render & Docker)"
 
     def handle(self, *args, **kwargs):
+
+        # -------------------------------------------------
+        # PREVENT MULTIPLE EXECUTION 
+        # -------------------------------------------------
+        if SeedLock.objects.filter(key="learnvanta_seed_v1").exists():
+            self.stdout.write("Seed already executed, skipping seeding.")
+            self._print_summary()
+            return
+
         with transaction.atomic():
 
             self.stdout.write("Seeding LearnVanta data...")
 
-            # =====================
-            # CLEAN DATABASE 
-            # =====================
+            # Create seed lock FIRST
+            SeedLock.objects.create(key="learnvanta_seed_v1")
+
+            # -------------------------------------------------
+            # CLEAN DATABASE (RUNS ONLY ONCE)
+            # -------------------------------------------------
             Video.objects.all().delete()
             Chapter.objects.all().delete()
             Subject.objects.all().delete()
             Class.objects.all().delete()
 
-            # =====================
+            # -------------------------------------------------
             # CLASSES
-            # =====================
+            # -------------------------------------------------
             class_11 = Class.objects.create(
                 id="class-11",
                 name="Class 11",
@@ -38,9 +50,9 @@ class Command(BaseCommand):
                 order=2,
             )
 
-            # =====================
+            # -------------------------------------------------
             # SUBJECTS
-            # =====================
+            # -------------------------------------------------
             physics_11 = Subject.objects.create(
                 id="physics-11",
                 class_ref=class_11,
@@ -81,10 +93,10 @@ class Command(BaseCommand):
                 order=1,
             )
 
-            # =====================
+            # -------------------------------------------------
             # CHAPTERS
-            # =====================
-            ch_chem11_1 = Chapter.objects.create(
+            # -------------------------------------------------
+            ch_chem11 = Chapter.objects.create(
                 id="ch-chem11-structure-atom",
                 subject=chemistry_11,
                 name="Structure of Atom",
@@ -99,7 +111,7 @@ class Command(BaseCommand):
             )
 
             ch_phy11_2 = Chapter.objects.create(
-                id="ch-phy11-motion",
+                id="ch-phy11-laws-motion",
                 subject=physics_11,
                 name="Laws of Motion",
                 order=2,
@@ -119,104 +131,51 @@ class Command(BaseCommand):
                 order=2,
             )
 
-            ch_phy12_1 = Chapter.objects.create(
+            ch_phy12 = Chapter.objects.create(
                 id="ch-phy12-electrostatics",
                 subject=physics_12,
                 name="Electrostatics",
                 order=1,
             )
 
-            # =====================
-            # VIDEOS (REAL YOUTUBE LINKS)
-            # =====================
+            # -------------------------------------------------
+            # VIDEOS 
+            # -------------------------------------------------
             videos = [
-                {
-                    "id": "vid-chem11-1",
-                    "chapter": ch_chem11_1,
-                    "title": "Structure of Atom – Class 11 Chemistry",
-                    "youtube_id": "YpX1R9J4XkQ",
-                    "duration": "19:50",
-                },
-                {
-                    "id": "vid-phy11-1",
-                    "chapter": ch_phy11_1,
-                    "title": "Introduction to Physics – Physical World",
-                    "youtube_id": "E5kBJW5Z8gQ",
-                    "duration": "14:32",
-                    "is_trending": True,
-                },
-                {
-                    "id": "vid-phy11-2",
-                    "chapter": ch_phy11_1,
-                    "title": "Units and Measurements – Class 11 Physics",
-                    "youtube_id": "HqjG1KJ7V9E",
-                    "duration": "18:10",
-                },
-                {
-                    "id": "vid-phy11-3",
-                    "chapter": ch_phy11_2,
-                    "title": "Newton’s First Law of Motion",
-                    "youtube_id": "kKKM8Y-u7ds",
-                    "duration": "22:45",
-                },
-                {
-                    "id": "vid-math11-1",
-                    "chapter": ch_math11_1,
-                    "title": "Sets – Introduction (Class 11)",
-                    "youtube_id": "z8VJ6Nf0sY0",
-                    "duration": "16:20",
-                },
-                {
-                    "id": "vid-math11-2",
-                    "chapter": ch_math11_1,
-                    "title": "Types of Sets – Mathematics",
-                    "youtube_id": "ZpG7n9nJH0A",
-                    "duration": "19:40",
-                },
-                {
-                    "id": "vid-math11-3",
-                    "chapter": ch_math11_2,
-                    "title": "Functions – One to One & Onto",
-                    "youtube_id": "9V6L7ZkU6pI",
-                    "duration": "21:55",
-                },
-                {
-                    "id": "vid-phy12-1",
-                    "chapter": ch_phy12_1,
-                    "title": "Electric Charges and Fields",
-                    "youtube_id": "Kk7t2d4Jk8I",
-                    "duration": "24:30",
-                    "is_trending": True,
-                },
-                {
-                    "id": "vid-phy12-2",
-                    "chapter": ch_phy12_1,
-                    "title": "Coulomb’s Law – Electrostatics",
-                    "youtube_id": "xP0u8l3x0aU",
-                    "duration": "20:15",
-                },
+                ("vid-chem11-1", ch_chem11, "Structure of Atom – Class 11 Chemistry", "YpX1R9J4XkQ", "19:50", False),
+                ("vid-phy11-1", ch_phy11_1, "Introduction to Physics – Physical World", "E5kBJW5Z8gQ", "14:32", True),
+                ("vid-phy11-2", ch_phy11_1, "Units and Measurements – Class 11 Physics", "HqjG1KJ7V9E", "18:10", False),
+                ("vid-phy11-3", ch_phy11_2, "Newton’s First Law of Motion", "kKKM8Y-u7ds", "22:45", False),
+                ("vid-math11-1", ch_math11_1, "Sets – Introduction (Class 11)", "z8VJ6Nf0sY0", "16:20", False),
+                ("vid-math11-2", ch_math11_1, "Types of Sets – Mathematics", "ZpG7n9nJH0A", "19:40", False),
+                ("vid-math11-3", ch_math11_2, "Functions – One to One & Onto", "9V6L7ZkU6pI", "21:55", False),
+                ("vid-phy12-1", ch_phy12, "Electric Charges and Fields", "Kk7t2d4Jk8I", "24:30", True),
+                ("vid-phy12-2", ch_phy12, "Coulomb’s Law – Electrostatics", "xP0u8l3x0aU", "20:15", False),
             ]
 
-            for v in videos:
+            for vid, chapter, title, yt, duration, trending in videos:
                 Video.objects.create(
-                    id=v["id"],
-                    chapter=v["chapter"],
-                    title=v["title"],
-                    description=v["title"],
+                    id=vid,
+                    chapter=chapter,
+                    title=title,
+                    description=title,
                     video_type="youtube",
-                    youtube_id=v["youtube_id"],
-                    youtube_url=f"https://www.youtube.com/watch?v={v['youtube_id']}",
-                    thumbnail=f"https://img.youtube.com/vi/{v['youtube_id']}/maxresdefault.jpg",
-                    duration=v["duration"],
-                    is_trending=v.get("is_trending", False),
+                    youtube_id=yt,
+                    youtube_url=f"https://www.youtube.com/watch?v={yt}",
+                    thumbnail=f"https://img.youtube.com/vi/{yt}/maxresdefault.jpg",
+                    duration=duration,
+                    is_trending=trending,
                     is_active=True,
                 )
 
-            # =====================
-            # SUMMARY
-            # =====================
             self.stdout.write(self.style.SUCCESS("LearnVanta seed data created successfully"))
-            self.stdout.write(f"Created {Class.objects.count()} classes")
-            self.stdout.write(f"Created {Subject.objects.count()} subjects")
-            self.stdout.write(f"Created {Chapter.objects.count()} chapters")
-            self.stdout.write(f"Created {Video.objects.count()} videos")
+            self._print_summary()
+
+    # -------------------------------------------------
+    # SUMMARY 
+    # -------------------------------------------------
+    def _print_summary(self):
+        self.stdout.write(f"Created {Class.objects.count()} classes")
+        self.stdout.write(f"Created {Subject.objects.count()} subjects")
+        self.stdout.write(f"Created {Chapter.objects.count()} chapters")
+        self.stdout.write(f"Created {Video.objects.count()} videos")
