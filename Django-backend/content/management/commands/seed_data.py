@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.utils import ProgrammingError
 from content.models import Class, Subject, Chapter, Video, SeedLock
 
 
@@ -11,16 +12,23 @@ class Command(BaseCommand):
         # -------------------------------------------------
         # PREVENT MULTIPLE EXECUTION 
         # -------------------------------------------------
-        if SeedLock.objects.filter(key="learnvanta_seed_v1").exists():
-            self.stdout.write("Seed already executed, skipping seeding.")
-            self._print_summary()
+        try:
+            if SeedLock.objects.filter(key="learnvanta_seed_v1").exists():
+                self.stdout.write("Seed already executed, skipping seeding.")
+                self._print_summary()
+                return
+        except ProgrammingError:
+            # SeedLock table not created yet (migrations still running)
+            self.stdout.write("SeedLock table not ready yet, skipping seeding.")
             return
 
         with transaction.atomic():
 
             self.stdout.write("Seeding LearnVanta data...")
 
-            # Create seed lock FIRST
+            # -------------------------------------------------
+            # CREATE SEED LOCK FIRST
+            # -------------------------------------------------
             SeedLock.objects.create(key="learnvanta_seed_v1")
 
             # -------------------------------------------------
@@ -139,7 +147,7 @@ class Command(BaseCommand):
             )
 
             # -------------------------------------------------
-            # VIDEOS 
+            # VIDEOS
             # -------------------------------------------------
             videos = [
                 ("vid-chem11-1", ch_chem11, "Structure of Atom – Class 11 Chemistry", "YpX1R9J4XkQ", "19:50", False),
@@ -172,7 +180,7 @@ class Command(BaseCommand):
             self._print_summary()
 
     # -------------------------------------------------
-    # SUMMARY 
+    # SUMMARY
     # -------------------------------------------------
     def _print_summary(self):
         self.stdout.write(f"Created {Class.objects.count()} classes")
