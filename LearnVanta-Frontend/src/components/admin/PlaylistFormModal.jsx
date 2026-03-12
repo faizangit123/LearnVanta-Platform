@@ -43,15 +43,15 @@ const PlaylistFormModal = ({ isOpen, onClose, onSubmit, playlist, isLoading }) =
   const [availableVideos, setAvailableVideos] = useState([]);
   const [selectedVideoId, setSelectedVideoId] = useState("");
 
-  useEffect(() => {
-    setChapters(getChaptersForForm());
-    loadVideos();
-  }, []);
-
   const loadVideos = async () => {
     const videos = await getAllVideos();
     setAvailableVideos(videos);
   };
+
+  useEffect(() => {
+    setChapters(getChaptersForForm());
+    loadVideos();
+  }, []);
 
   useEffect(() => {
     if (playlist) {

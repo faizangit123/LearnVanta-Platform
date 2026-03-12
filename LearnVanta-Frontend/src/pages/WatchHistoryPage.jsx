@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useWatchHistory } from '../hooks/useWatchHistory';
+import { useWatchHistory } from '../hooks/useWatchHistory.js';
 import { MainLayout } from '../components/layout';
 
 // Icons
@@ -154,7 +154,15 @@ const SmartSuggestion = ({ historyItem, allVideos }) => {
 };
 
 // History card component
-const HistoryCard = ({ item, isSelected, onSelect, onRemove, isSelectionMode, showSuggestions = false }) => {
+const HistoryCard = ({
+  item,
+  isSelected,
+  onSelect,
+  onRemove,
+  isSelectionMode,
+  showSuggestions = false,
+  allVideos = []
+}) => {
   const isWatched = item.progress >= 90;
   
   const formatTimeRemaining = (duration, progress) => {
@@ -367,7 +375,7 @@ const HistoryCard = ({ item, isSelected, onSelect, onRemove, isSelectionMode, sh
             Resume
           </Link>
         )}
-        {showSuggestions && <SmartSuggestion historyItem={item} allVideos={allVideos} />}
+        {showSuggestions && allVideos.length > 0 && (<SmartSuggestion historyItem={item} allVideos={allVideos} />)}
       </div>
 
       <button onClick={() => onRemove(item.videoId)} style={styles.removeBtn} className="history-remove-btn" title="Remove from history">
@@ -468,13 +476,15 @@ const TimelineGroup = ({ groupKey, items, selectedIds, onSelect, onRemove, isSel
         <div style={styles.grid}>
           {items.map((item, index) => (
             <HistoryCard
-              key={item.videoId}
-              item={item}
-              isSelected={selectedIds.includes(item.videoId)}
-              onSelect={onSelect}
-              onRemove={onRemove}
-              isSelectionMode={isSelectionMode}
-              showSuggestions={index === 0}
+            key={item.videoId}
+            item={item}
+            isSelected={selectedIds.includes(item.videoId)}
+            onSelect={onSelect}
+            onRemove={onRemove}
+            isSelectionMode={isSelectionMode}
+            showSuggestions={index === 0}
+            allVideos={items}
+
             />
           ))}
         </div>

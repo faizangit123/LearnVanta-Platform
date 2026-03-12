@@ -281,7 +281,7 @@ const AdminDashboard = () => {
       const allUsers = await getAllUsers();
       setUsers(allUsers);
     } catch (error) {
-      showNotification("Failed to load users", "error");
+      showNotification("Failed to load users: ", `${error}`);
     } finally {
       setUsersLoading(false);
     }
@@ -293,7 +293,8 @@ const AdminDashboard = () => {
       const allVideos = await getAllVideos();
       setVideos(allVideos);
     } catch (error) {
-      showNotification("Failed to load videos", "error");
+      
+      showNotification("Failed to load videos", `${error}`);
     } finally {
       setVideosLoading(false);
     }
@@ -305,7 +306,7 @@ const AdminDashboard = () => {
       const logs = await getRecentActivities(50);
       setActivityLogs(safeArray(logs));
     } catch (error) {
-      showNotification("Failed to load activity logs", "error");
+      showNotification("Failed to load activity logs: ", `${error}`);
     } finally {
       setActivityLoading(false);
     }
@@ -317,7 +318,7 @@ const AdminDashboard = () => {
     setActivityLogs([]);         // THIS is the missing piece
     showNotification("All activity logs cleared");
   } catch (error) {
-    showNotification("Failed to clear logs", "error");
+    showNotification("Failed to clear logs: ", `${error}`);
   }
 };
   const loadPlaylists = async () => {
@@ -326,7 +327,7 @@ const AdminDashboard = () => {
       const allPlaylists = await getAllPlaylists();
       setPlaylists(allPlaylists);
     } catch (error) {
-      showNotification("Failed to load playlists", "error");
+      showNotification("Failed to load playlists: ", `${error}`);
     } finally {
       setPlaylistsLoading(false);
     }
@@ -688,11 +689,9 @@ const AdminDashboard = () => {
             >
               Resources
             </button>
-            {false && (
-              <button
-              className={`admin-tab ${activeTab === "users" ? "active" : ""}`}
-              onClick={() => setActiveTab("users")}
-              >
+            {isAdmin && (
+              <button className={`admin-tab ${activeTab === "users" ? "active" : ""}`}
+              onClick={() => setActiveTab("users")}>
               Users
               </button>
               )}

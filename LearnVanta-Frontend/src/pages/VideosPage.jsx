@@ -110,16 +110,22 @@ const VideosPage = () => {
 
   // proper duration parsing (HH:MM:SS)
   const parseDuration = (durationStr) => {
-    if (!durationStr) return 0;
-    const parts = durationStr.split(":").map(Number);
-    if (parts.length === 3) {
-      return parts[0] * 60 + parts[1] + parts[2] / 60
-    }
-    if (parts.length === 2) {
-      return parts[0];
-    }
-    return 0;
-  };
+  if (!durationStr) return 0;
+
+  const parts = durationStr.split(":").map(Number);
+
+  if (parts.length === 3) {
+    const [h, m, s] = parts;
+    return h * 60 + m + s / 60;
+  }
+
+  if (parts.length === 2) {
+    const [m, s] = parts;
+    return m + s / 60;
+  }
+
+  return 0;
+};
 
   const filteredVideos = useMemo(() => {
     let result = videos.filter((video) => {

@@ -160,6 +160,18 @@ useEffect(() => {
   const { openMiniPlayer } = useMiniPlayer();
   const isVideoFavorite = isFavorite(videoId);
 
+  const handleToggleFavorite = async () => {
+  if (!video || !chapter) return;
+
+  await toggleFavorite({
+    id: video.id,
+    title: video.title,
+    thumbnail: video.thumbnail,
+    duration: video.duration,
+    chapterName: chapter.name,
+  });
+};
+
   useEffect(() => {
     loadProgress();
   }, [loadProgress]);
