@@ -7,6 +7,14 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'edustream_backend.settings')
+
+    # This is needed when running manage.py directly (outside Docker)
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass  # dotenv not installed, rely on system env vars
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

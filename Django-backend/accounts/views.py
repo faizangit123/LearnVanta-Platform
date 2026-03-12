@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
 from django.utils import timezone
+from django.conf import settings
 from datetime import timedelta
 import secrets
 
@@ -27,9 +28,6 @@ def login_view(request):
     serializer = LoginSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    # IMPORTANT FIX:
-    # Your custom user uses EMAIL as USERNAME_FIELD
-    # So authenticate MUST use "username=email"
     user = authenticate(
         username=serializer.validated_data['email'],
         password=serializer.validated_data['password']
@@ -38,13 +36,14 @@ def login_view(request):
     if not user:
         return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if not user.email_verified and not user.is_staff:
+    # ✅ FIX: In DEBUG mode, skip email verification check
+    # This allows local dev login without needing real email sending
+    if not settings.DEBUG and not user.email_verified and not user.is_staff:
         return Response(
             {'detail': 'Please verify your email before signing in.'},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-    # Token auth (your frontend expects this)
     token, _ = Token.objects.get_or_create(user=user)
 
     ActivityLog.objects.create(
@@ -77,19 +76,24 @@ def register_view(request):
         expires_at=timezone.now() + timedelta(hours=24)
     )
 
-    # Send verification email (real)
-    from django.core.mail import send_mail
-    from django.conf import settings
-
-    frontend_url = settings.FRONTEND_URL
-    verification_url = f"{frontend_url}/verify-email?token={token}"
-    send_mail(
-        subject="Verify your LearnVanta account",
-        message=f"Click the link below to verify your account:\n\n{verification_url}",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False
-    )
+    # ✅ FIX: Only send real emails in production
+    # In DEBUG mode, auto-verify the user so they can login immediately
+    if settings.DEBUG:
+        user.email_verified = True
+        user.save()
+        message = 'Account created. You can login now (dev mode — email auto-verified).'
+    else:
+        from django.core.mail import send_mail
+        frontend_url = settings.FRONTEND_URL
+        verification_url = f"{frontend_url}/verify-email?token={token}"
+        send_mail(
+            subject="Verify your LearnVanta account",
+            message=f"Click the link below to verify your account:\n\n{verification_url}",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False
+        )
+        message = 'Please check your email to verify your account.'
 
     ActivityLog.objects.create(
         type=ActivityLog.ActivityType.USER_REGISTERED,
@@ -98,7 +102,7 @@ def register_view(request):
 
     return Response({
         'user': UserSerializer(user).data,
-        'message': 'Please check your email to verify your account.'
+        'message': message,
     }, status=status.HTTP_201_CREATED)
 
 
@@ -150,8 +154,6 @@ def resend_verification_view(request):
     )
 
     from django.core.mail import send_mail
-    from django.conf import settings
-
     frontend_url = settings.FRONTEND_URL
     verification_url = f"{frontend_url}/verify-email?token={token}"
     send_mail(
@@ -188,8 +190,6 @@ def password_reset_view(request):
     )
 
     from django.core.mail import send_mail
-    from django.conf import settings
-
     frontend_url = settings.FRONTEND_URL
     reset_url = f"{frontend_url}/reset-password?token={token}"
     send_mail(

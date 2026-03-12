@@ -27,8 +27,9 @@ def activities_list(request):
     serializer = ActivityLogSerializer(logs, many=True)
     return Response(serializer.data)
 
+
 # ----------------------------------
-# CREATE ACTIVITY 
+# CREATE ACTIVITY
 # ----------------------------------
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -38,12 +39,14 @@ def create_activity(request):
     Backend injects: user + timestamp
     Logging must NEVER crash the app.
     """
-
     try:
+        # ✅ FIX: Safely handle anonymous users — user.id is None when not authenticated
+        user_id = request.user.id if request.user.is_authenticated else None
+
         serializer = ActivityLogSerializer(data={
             "type": request.data.get("type"),
             "details": request.data.get("details", {}),
-            "user": request.user.id,
+            "user": user_id,
             "timestamp": timezone.now(),
         })
 
@@ -52,11 +55,11 @@ def create_activity(request):
             return Response(serializer.data, status=201)
 
     except Exception:
-        # swallow all logging errors
+        # Swallow all logging errors — never crash the app for activity logging
         pass
 
-    # Always succeed from frontend POV
     return Response({"ignored": True}, status=200)
+
 
 # ----------------------------------
 # CLEAR ACTIVITIES (ADMIN ONLY)

@@ -1,6 +1,7 @@
 # EduStream Django Backend
 FROM python:3.11-slim
 
+LABEL maintainer="faizanrock705@gmail.com"
 # -----------------------------
 # Environment variables
 # -----------------------------
@@ -8,7 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # -----------------------------
-# Working directory
+# Working directory(inside container = all the commands run from here)
 # -----------------------------
 WORKDIR /app
 

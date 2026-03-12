@@ -1,11 +1,12 @@
-//Centralized API Configuration
+// Centralized API Configuration
 
 // ============================================
 // API CONFIGURATION
 // ============================================
 
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  // ✅ FIX: Local fallback now includes /api/v1 to match Django URL structure
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
   useMock: false,
   timeout: 30000,
   apiPrefix: '',
@@ -18,7 +19,7 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
 
   // =========================
-  // AUTH 
+  // AUTH
   // =========================
   auth: {
     login: '/auth/login/',
@@ -42,15 +43,18 @@ export const API_ENDPOINTS = {
   },
 
   subjects: {
+    list: '/content/subjects/',
     byClass: (classId) => `/content/subjects/${classId}/`,
+    search: '/content/subjects/search/',
   },
 
   chapters: {
     bySubject: (subjectId) => `/content/chapters/${subjectId}/`,
+    search: '/content/chapters/search/',
   },
 
   // =========================
-  // VIDEOS 
+  // VIDEOS
   // =========================
   videos: {
     list: '/content/videos/',
@@ -60,7 +64,7 @@ export const API_ENDPOINTS = {
   },
 
   // =========================
-  // USERDATA 
+  // USERDATA
   // =========================
   history: {
     list: '/userdata/history/',
@@ -77,40 +81,42 @@ export const API_ENDPOINTS = {
   favorites: {
     list: '/userdata/favorites/',
     toggle: (videoId) => `/userdata/favorites/${videoId}/toggle/`,
+    add: (videoId) => `/userdata/favorites/${videoId}/add/`,
+    remove: (videoId) => `/userdata/favorites/${videoId}/remove/`,
   },
 
   notes: {
     byVideo: (videoId) => `/userdata/notes/video/${videoId}/`,
     list: '/userdata/notes/',
-     detail: (noteId) => `/userdata/notes/${noteId}/`,
+    detail: (noteId) => `/userdata/notes/${noteId}/`,
   },
 
-
   playlists: {
-  list: "/userdata/playlists/",
-  detail: (id) => `/userdata/playlists/${id}/`,
-  create: "/userdata/playlists/",
-  // update: (id) => `/userdata/playlists/${id}/`,
-  delete: (id) => `/userdata/playlists/${id}/`,
-},
-
+    list: '/userdata/playlists/',
+    detail: (id) => `/userdata/playlists/${id}/`,
+    create: '/userdata/playlists/',
+    delete: (id) => `/userdata/playlists/${id}/`,
+    addVideo: (id) => `/userdata/playlists/${id}/add-video/`,
+    removeVideo: (id) => `/userdata/playlists/${id}/remove-video/`,
+    reorder: (id) => `/userdata/playlists/${id}/reorder/`,
+  },
 
   // =========================
-  // RESOURCES 
+  // RESOURCES
   // =========================
   resources: {
-  list: '/resources/',
-  byChapter: (chapterId) => `/resources/chapters/${chapterId}/`,
-  detail: (id) => `/resources/${id}/`,
-  trackDownload: (id) => `/resources/${id}/track-download/`,
-},
-
+    list: '/resources/',
+    byChapter: (chapterId) => `/resources/chapters/${chapterId}/`,
+    detail: (id) => `/resources/${id}/`,
+    trackDownload: (id) => `/resources/${id}/track-download/`,
+  },
 
   // =========================
-  // ACTIVITIES 
+  // ACTIVITIES
   // =========================
   activities: {
     list: '/activities/',
+    create: '/activities/create/',
     recent: '/activities/recent/',
     clear: '/activities/clear/',
     stats: '/activities/stats/',
@@ -151,16 +157,16 @@ export const clearAllTokens = () => {
 // ============================================
 
 export const apiRequest = async (endpoint, options = {}) => {
-
   const url = `${API_CONFIG.baseUrl}${API_CONFIG.apiPrefix}${endpoint}`;
   const token = getAuthToken();
 
   const headers = {
     'Content-Type': 'application/json',
-    ...(token && {'Authorization': token.split('.').length === 3
-    ? `Bearer ${token}`   // JWT
-    : `Token ${token}`    // DRF token
-}),
+    ...(token && {
+      'Authorization': token.split('.').length === 3
+        ? `Bearer ${token}`   // JWT
+        : `Token ${token}`    // DRF Token auth
+    }),
     ...options.headers,
   };
 
@@ -253,7 +259,6 @@ export const formatApiError = (error) => {
   if (error.message) return error.message;
   return 'An unexpected error occurred';
 };
-
 
 // ============================================
 // SAFE HELPERS

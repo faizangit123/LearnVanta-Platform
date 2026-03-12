@@ -16,16 +16,6 @@ The platform is built with a **React + Vite frontend** and a **Django REST backe
 
 ### 📸 Screenshots
 
-- Add screenshots here
-
-- Home page
-
-- Video player
-
-- Notes & playlists
-
-- Admin dashboard
-
 ---
 
 ## 🏗️ Project Architecture

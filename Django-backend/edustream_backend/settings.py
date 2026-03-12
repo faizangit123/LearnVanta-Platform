@@ -3,7 +3,6 @@ Django settings for edustream backend
 """
 
 from pathlib import Path
-from datetime import timedelta
 import os
 import dj_database_url
 
@@ -11,6 +10,13 @@ import dj_database_url
 # Base directory
 # --------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# ✅ Load .env file (belt-and-suspenders — manage.py also does this)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    pass
 
 # --------------------------------------------------
 # Security
@@ -29,8 +35,6 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
 
-
-# Safety fallback 
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == [""]:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
@@ -61,7 +65,6 @@ INSTALLED_APPS = [
 
 INSTALLED_APPS += [
     'django.contrib.sites',
-
     'allauth',
     'allauth.account',
 ]
@@ -84,8 +87,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-HANDLER404 = "project.urls.api_not_found"
+# ✅ Fixed module path
+HANDLER404 = "edustream_backend.urls.api_not_found"
 
 # --------------------------------------------------
 # URLs / WSGI
@@ -113,31 +116,36 @@ TEMPLATES = [
 ]
 
 # --------------------------------------------------
-# DATABASE CONFIGURATION (POSTGRES – SAFE + DOCKER)
+# DATABASE CONFIGURATION
 # --------------------------------------------------
 
 if os.environ.get("COLLECTSTATIC") == "1":
-    # Build-time only (no DB access)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "dummy.sqlite3",
         }
     }
-
 else:
     DATABASE_URL = os.environ.get("DATABASE_URL")
-
-    if not DATABASE_URL:
-        raise RuntimeError("DATABASE_URL is not set")
-
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=DATABASE_URL.startswith("postgres://") and "render.com" in DATABASE_URL,
-        )
-    }
+    if DATABASE_URL:
+        DATABASES = {
+            "default": dj_database_url.parse(
+                DATABASE_URL,
+                conn_max_age=600,
+                ssl_require=(
+                    DATABASE_URL.startswith("postgres://")
+                    and "render.com" in DATABASE_URL
+                ),
+            )
+        }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
+        }
 
 # --------------------------------------------------
 # Custom User Model
@@ -176,15 +184,11 @@ REST_FRAMEWORK = {
 # --------------------------------------------------
 # Frontend URL
 # --------------------------------------------------
-FRONTEND_URL = os.environ.get(
-    "FRONTEND_URL",
-    "http://localhost:5173"
-)
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # --------------------------------------------------
-# CORS (FINAL WORKING CONFIG)
+# CORS
 # --------------------------------------------------
-
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -240,17 +244,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --------------------------------------------------
-# Email (SendGrid)
+# Email
 # --------------------------------------------------
-EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+if DEBUG:
+    # ✅ Local dev: print emails to terminal — no real sending needed
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+
 DEFAULT_FROM_EMAIL = "faizanrock705@gmail.com"
-
-# ACCOUNT_EMAIL_REQUIRED = True
-# ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-# ACCOUNT_AUTHENTICATION_METHOD = "email"
-# ACCOUNT_USERNAME_REQUIRED = False
-
 
 # --------------------------------------------------
 # Local overrides (optional)
