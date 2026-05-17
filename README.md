@@ -1,4 +1,4 @@
-# 🎓 LearnVanta – Modern Video Learning Platform
+# LearnVanta – Modern Video Learning Platform
 
 **LearnVanta** is a modern, video-based learning platform designed for **Class 8–12 students and college learners**.  
 It organizes **YouTube educational content** into a structured, distraction-free learning experience with features like progress tracking, notes, playlists, and admin content management.
@@ -7,17 +7,18 @@ The platform is built using a **React + Vite frontend** and a **Django REST Fram
 
 ---
 
-# 🔗 Live Demo
+## 🌐 Live Demo
 
-- **Frontend:** https://learn-vanta-platform.vercel.app/  
-- **Backend API:** https://your-backend.onrender.com  
-- **Health Check:** `/api/health/`
+| Service | URL |
+|---------|-----|
+| **Frontend** | https://skill-sync-sage-nu.vercel.app/ |
+| **Backend API:** | https://your-backend.onrender.com |
+| **Health Check:** | `/api/health/` |
 
 ---
 
 # 📸 Screenshots
 
-_Add screenshots of the application UI here._
 
 ---
 
