@@ -1,4 +1,4 @@
-# 🎓 LearnVanta – Modern Video Learning Platform
+# LearnVanta – Modern Video Learning Platform
 
 **LearnVanta** is a modern, video-based learning platform designed for **Class 8–12 students and college learners**.  
 It organizes **YouTube educational content** into a structured, distraction-free learning experience with features like progress tracking, notes, playlists, and admin content management.
@@ -16,6 +16,12 @@ The platform is built using a **React + Vite frontend** and a **Django REST Fram
 ---
 
 # 📸 Screenshots
+
+<img width="1919" height="1071" alt="image" src="https://github.com/user-attachments/assets/dc23cc51-f24a-4799-bdf0-c3188c302130" />
+
+---
+
+<img width="1919" height="1060" alt="image" src="https://github.com/user-attachments/assets/bd7484ec-0232-4016-96ff-f92a348c24e1" />
 
 ---
 
